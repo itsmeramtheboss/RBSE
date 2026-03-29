@@ -2442,7 +2442,7 @@ const cols = window.currentCols;
 //----
    // 1. DOB की जांच और रिकवरी
     let dobIdx = cols.findIndex(c => c.toUpperCase() === 'DOB');
-    if (studentRow[dobIdx] === '0' || !studentRow[dobIdx] || studentRow[dobIdx] === '--') {
+    if (cls == 12 && studentRow[dobIdx] === '0' || !studentRow[dobIdx] || studentRow[dobIdx] === '--') {
 // अगर DOB नहीं है, तो fetchFallbackData चलाओ
 const res = await fetchFallbackData('DOB', studentRow, cols, cls, year);
 if (res.value) {
@@ -2453,7 +2453,7 @@ if (res.value) {
 
     // 2. Caste की जांच और रिकवरी (यदि आवश्यक हो)
     let casteIdx = cols.findIndex(c => c.toUpperCase() === 'CASTE');
-    if (studentRow[casteIdx] === '0' || !studentRow[casteIdx]) {
+    if (cls == 12 && studentRow[casteIdx] === '0' || !studentRow[casteIdx]) {
 const res = await fetchFallbackData('CASTE', studentRow, cols, cls, year);
 if (res.value) {
     studentRow[casteIdx] = res.value;
