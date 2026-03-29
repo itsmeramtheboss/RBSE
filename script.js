@@ -3430,7 +3430,7 @@ if (type === "info") {
 // Auto-hide only if condition NOT matched
 hideTimeout = setTimeout(() => {
     statusDiv.style.display = "none";
-}, 10000);
+}, 30000);
     }
 }
 
