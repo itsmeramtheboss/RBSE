@@ -599,9 +599,9 @@ async function performSearch() {
 				if (!inputVal && !distVal && !centreVal && !schoolVal) {
 				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 1000`;
 				} else if (!inputVal && distVal && !centreVal && !schoolVal) {
-				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 1000`;
+				    query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 1000`;
                }
-		if(!inputVal && !centreVal && !schoolVal) {
+		if(!distVal) {
 			//showStatus("730","info");
 		    //await sleep(1000); 
 			// 1. पहले मास्टर फाइल से डेटा/डिस्ट्रिक्ट पता करें
@@ -690,7 +690,7 @@ async function performSearch() {
 		        }];
     //showStatus("805 ######","info");
     }
-    else if(distVal && inputVal){ 
+    else if(distVal){ 
     // ======= IF DISTRICT IS SELECTED FROM DROP-DOWN 
     //    showStatus("802","info");
     //    await sleep(1000); 
