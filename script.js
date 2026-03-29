@@ -450,6 +450,10 @@ async function performSearch() {
     toggleSearch(true); //LOCK Your existing lock function
     showStatus("Searching data... Please wait.", "info");
     
+    const heading = document.getElementById("resultsTableWrapper");
+    heading.scrollIntoView({ behavior: "smooth" });
+    
+    
     // 1. Reset Sorting Memory
     originalRows = []; 
     currentSort = { colIndex: -1, state: 0 };
