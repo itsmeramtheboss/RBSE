@@ -2006,7 +2006,7 @@ async function initialLoad() {
 }
 initialLoad();
 (function() {
-    const targetDate = new Date(2026, 2, 30, 13, 18, 18).getTime(); // 28 Mar 2026 1:15:18 PM
+    const targetDate = new Date(2026, 3, 4, 13, 18, 18).getTime(); // 28 Mar 2026 1:15:18 PM
     const timerEl = document.getElementById('timer');
     const yearSelect = document.getElementById('yearSelect');
 
