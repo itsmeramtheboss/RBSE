@@ -145,22 +145,46 @@ function toggleSearch(disabled) {
 input.disabled = disabled;
     });
 }
-function toggleUSearch(disabled) {
+function toggleSearch(disabled) {
     const btn = document.getElementById('searchBtn');
-    const loader = document.getElementById('loaderOverlay'); // लोडर को पकड़ा
-
-    // लोडर दिखाना या छुपाना
-    loader.style.display = disabled ? "flex" : "none"; 
-
     btn.disabled = disabled;
+
+    const countdownElement = document.getElementById('countdown');
+    const loader = document.getElementById('loaderOverlay'); // लोडर को पकड़ा
+    if (loader) {
+    	loader.style.display = disabled ? "flex" : "none"; 
+    }
+    
+    if (disabled) {
+        let timeLeft = 50;
+        countdownElement.textContent = timeLeft; // तुरंत 30 दिखाएँ
+
+        // पुराने किसी भी चल रहे टाइमर को साफ़ करने के लिए window.searchTimer का उपयोग करें
+        if (window.searchTimer) clearInterval(window.searchTimer);
+
+        window.searchTimer = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearInterval(window.searchTimer);
+                // जब समय खत्म हो जाए तो सब वापस इनेबल कर दें
+                //toggleSearch(false); 
+            }
+        }, 1500);
+    } else {
+        // अगर मैन्युअली बंद किया जाए तो टाइमर रोक दें
+        if (window.searchTimer) clearInterval(window.searchTimer);
+    }
+    
     btn.style.opacity = disabled ? "0.5" : "1";
     btn.style.cursor = disabled ? "not-allowed" : "pointer";
     btn.innerText = disabled ? "Wait...." : "Search";
-
+    // सभी ड्रॉपडाउन और रेडियो बटन को डिसेबल/इनेबल करें
     const inputs = document.querySelectorAll('#yearSelect, input[name="class"], input[name="reset"], input[name="search"], #districtSelect, #centreSelect, #schoolSelect, #sub1, #sub2, #sub3');
     
     inputs.forEach(input => {
-        input.disabled = disabled;
+input.disabled = disabled;
     });
 }
 
@@ -2415,12 +2439,14 @@ doc.text(item.label, bX + (barWidth/2), chartY + 5, {align: "center"});
 async function downloadBatchPDF(cls, year) {
     const table = document.getElementById("resultTable");
     if (!table) return;
+    toggleSearch(true) //LOCK
 
     // Get current search columns from the last performSearch run
     // We need to store these globally when search finishes
     if (!window.currentCols) {
-showStatus("Please perform a search first.", "error");
-return;
+      showStatus("Please perform a search first.", "error");
+      toggleSearch(false) //UNLOCK
+      return;
     }
 
     const rows = Array.from(table.tBodies[0].rows);
@@ -2485,6 +2511,7 @@ if(!inputVal){
 else{
     doc.save(`Batch_${inputVal}_${year}-${cls}.pdf`);
     }
+    toggleSearch(false) //UNLOCK
     showStatus("Download Complete", "success");
 }
 
@@ -3384,7 +3411,9 @@ dlBtn.onclick = () => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
+    toggleSearch(true) //LOCK
     generateResultPage(doc, roll, cls, year, row, cols);
+    toggleSearch(false) //UNLOCK
 
     // IMMEDIATE DOWNLOAD
     console.log("PDF Generation Successful");
