@@ -15,6 +15,10 @@ export async function getSQLEngine() {
     return SQL_ENGINE;
 }
 
+export const globalState = {
+    subDir: `https://ramnivasbishnoi.github.io/R29/`
+};
+
 export function getDBUrl(year, cls, dCode) {
     const user = "ramnivasbishnoi"; // https://ramnivasbishnoi.github.io/R29/अपना GitHub यूजरनेम यहाँ लिखें
     let repo = "";
@@ -52,6 +56,7 @@ export function getMasterUrl(year, cls) {
 	else if (year >= 2019 && year <= 2021) repo = "R07";
 	else if (year >= 2022 && year <= 2024) repo = "R08";
 	else  repo = "R29";
+	
     subDir = `https://${user}.github.io/${repo}/`;
     
     return `https://${user}.github.io/${repo}/AllResult${year}-${cls}`;
