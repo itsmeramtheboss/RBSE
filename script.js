@@ -3292,6 +3292,7 @@ el.innerHTML = msg; el.className = type; el.style.display = 'block';
     
 window.performSearch = performSearch;
 window.onSearchChange = onSearchChange;
+window.showModal = showModal; 
 window.closeModal = closeModal; 
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
