@@ -1,10 +1,4 @@
 /* --- JAVASCRIPT SECTION START --- */
-
-// utils.js से फंक्शन्स को बुलाना
-import {getSQLEngine, getDBUrl, getMasterUrl, toggleSearch, updateVerificationDate} from './scripthelper.js';
-
-
-
 // Global variables to track the state
 let SQL_ENGINE = null;
 let loadedDbKey = ""; 
@@ -15,72 +9,97 @@ let hideTimeout;
 const schoolNameCache = {}; // Global store for school names: { "pureID": "School Name" }
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-async function forceResetAndReload() {
-    showStatus("Clearing all caches & IndexedDB... Reloading fresh...", "info");
-    const searchType = document.querySelector('input[name="search"]:checked').value;
-    const searchInputEl = document.getElementById('searchInput'); 
-    searchInputEl.disabled = false; 
-    if (searchType === "roll"){
-    searchInputEl.placeholder="Enter Roll (e.g. 1234 OR 1000-1234)"
-    }else{
-    searchInputEl.placeholder="Enter Name (e.g. RameshKumar)"
-    }
-    // 1. sql-wasm DB क्लोज करो
-    if (db) { try { db.close(); } catch(e) {} db = null; subjectdb = null;}
-  
-
-    // 2. सभी ग्लोबल वैरिएबल क्लियर
-    loadedDbKey = "";
-    deepStore = {};
-    masterSchoolNames = {};
-    schoolNameCache = {};
-
-    // 3. IndexedDB पूरी तरह क्लियर (sql.js का अपना DB)
-    try {
-const dbs = await indexedDB.databases();
-for (const dbInfo of dbs) {
-    if (dbInfo.name.includes("sql.js") || dbInfo.name.includes("sqlite")) {
-        indexedDB.deleteDatabase(dbInfo.name);
-        console.log("Deleted IndexedDB:", dbInfo.name);
-    }
+export async function getSQLEngine() {
+    if (!SQL_ENGINE) SQL_ENGINE = await initSqlJs(config);
+    return SQL_ENGINE;
 }
-    } catch (e) {
-console.warn("IndexedDB clear failed:", e);
-    }
 
-    // 4. Cache API से sql-wasm और DB फाइल क्लियर
-    try {
-if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    for (const name of cacheNames) {
-        if (name.includes("sql-wasm") || name.includes("AllResult")) {
-            await caches.delete(name);
-            console.log("Deleted Cache:", name);
-        }
-    }
-}
-    } catch (e) {
-console.warn("Cache clear failed:", e);
-    }
+export function getDBUrl(year, cls, dCode) {
+    const user = "ramnivasbishnoi"; // https://ramnivasbishnoi.github.io/R29/अपना GitHub यूजरनेम यहाँ लिखें
+    let repo = "";
 
-    // 5. Hard reload with cache-busting
-    const url = window.location.href.split('?')[0] + '?forceFresh=' + Date.now() + '&nocache=' + Math.random();
+    // सालों के हिसाब से रेपो चुनें (अपनी सुविधा अनुसार बदलें)
+    if (year == 2026 && cls == 12) repo = "R26-12";
+    else if (year == 2026 && cls == 10) repo = "R26-10";
+	else if (year >= 2001 && year <= 2003) repo = "R01";
+	else if (year >= 2004 && year <= 2006) repo = "R02";
+	else if (year >= 2007 && year <= 2009) repo = "R03";
+	else if (year >= 2010 && year <= 2012) repo = "R04";
+	else if (year >= 2013 && year <= 2015) repo = "R05";
+	else if (year >= 2016 && year <= 2018) repo = "R06";
+	else if (year >= 2019 && year <= 2021) repo = "R07";
+	else if (year >= 2022 && year <= 2024) repo = "R08";
+	else  repo = "R29";
+
     
-    // सबसे पक्का: location.replace() + full reload
-    window.location.replace(url);
+    return `https://${user}.github.io/${repo}/AllResult${year}-${cls}-${dCode}.db`;
     
-    // वैकल्पिक: 300ms बाद reload(true)
-    setTimeout(() => {
-window.location.reload(true);
-    }, 500);
+}
+export function getMasterUrl(year, cls) {
+    const user = "ramnivasbishnoi"; // https://ramnivasbishnoi.github.io/R29/अपना GitHub यूजरनेम यहाँ लिखें
+    let repo = "";
+
+    // सालों के हिसाब से रेपो चुनें (अपनी सुविधा अनुसार बदलें)
+    if (year == 2026 && cls == 12) repo = "R26-12";
+	else if (year >= 2001 && year <= 2003) repo = "R01";
+	else if (year >= 2004 && year <= 2006) repo = "R02";
+	else if (year >= 2007 && year <= 2009) repo = "R03";
+	else if (year >= 2010 && year <= 2012) repo = "R04";
+	else if (year >= 2013 && year <= 2015) repo = "R05";
+	else if (year >= 2016 && year <= 2018) repo = "R06";
+	else if (year >= 2019 && year <= 2021) repo = "R07";
+	else if (year >= 2022 && year <= 2024) repo = "R08";
+	else  repo = "R29";
+
+    
+    return `https://${user}.github.io/${repo}/AllResult${year}-${cls}`;
+    
 }
 
 
-function reRenderOnly() {
-    if (window.lastResultSet && window.lastCls && window.lastYear) {
-renderTable(window.lastResultSet, window.lastCls, window.lastYear);
+export function toggleSearch(disabled) {
+    const btn = document.getElementById('searchBtn');
+    btn.disabled = disabled;
+
+    const countdownElement = document.getElementById('countdown');
+    const loader = document.getElementById('loaderOverlay'); // लोडर को पकड़ा
+    if (loader) {
+    	loader.style.display = disabled ? "flex" : "none"; 
     }
+    
+    if (disabled) {
+        let timeLeft = 50;
+        countdownElement.textContent = timeLeft; // तुरंत 30 दिखाएँ
+
+        // पुराने किसी भी चल रहे टाइमर को साफ़ करने के लिए window.searchTimer का उपयोग करें
+        if (window.searchTimer) clearInterval(window.searchTimer);
+
+        window.searchTimer = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                clearInterval(window.searchTimer);
+                // जब समय खत्म हो जाए तो सब वापस इनेबल कर दें
+                //toggleSearch(false); 
+            }
+        }, 1500);
+    } else {
+        // अगर मैन्युअली बंद किया जाए तो टाइमर रोक दें
+        if (window.searchTimer) clearInterval(window.searchTimer);
+    }
+    
+    btn.style.opacity = disabled ? "0.5" : "1";
+    btn.style.cursor = disabled ? "not-allowed" : "pointer";
+    btn.innerText = disabled ? "Wait...." : "Search";
+    // सभी ड्रॉपडाउन और रेडियो बटन को डिसेबल/इनेबल करें
+    const inputs = document.querySelectorAll('#yearSelect, input[name="class"], input[name="reset"], input[name="search"], #districtSelect, #centreSelect, #schoolSelect, #sub1, #sub2, #sub3');
+    
+    inputs.forEach(input => {
+input.disabled = disabled;
+    });
 }
+
 
 
 let currentSort = { colIndex: -1, state: 0 }; 
@@ -1809,6 +1828,81 @@ e.target.value = value.replace(/[^a-zA-Z\s]/g, '');
 });
 
 
+export async function updateVerificationDate(db){
+try {
+	// 1. इनपुट वैल्यूज लें
+		const cls = document.querySelector('input[name="class"]:checked').value;
+	    const year = document.getElementById('yearSelect').value;
+	    
+		const key = `${year}-${cls}-master`;
+	    //if(loadedDbKey) showStatus(`${loadedDbKey} = ${key}`, "info");
+		const distVal = document.getElementById('districtSelect').value;
+		const centreVal = document.getElementById('centreSelect').value;
+		const schoolVal = document.getElementById('schoolSelect').value;
+	if(!db) {showStatus("Data not available", "error"); return; }
+	// 2. डायनामिक क्वेरी बनाएँ
+	let query;
+	const params = [];
+	if (loadedDbKey === key){
+		query = `SELECT time FROM results
+		             WHERE 1=1`; // 1=1 एक 'dummy' कंडीशन है ताकि आगे AND लगाना आसान हो
+		
+		if (distVal) { query += " AND District = ?"; params.push(distVal); }
+		if (centreVal) { query += " AND Centre = ?"; params.push(centreVal); }
+		if (schoolVal) { query += " AND School = ?"; params.push(schoolVal); }
+	
+	} else {
+		query = `SELECT r.time FROM results r
+		             JOIN schools s ON r.School = s.School
+		             JOIN centres c ON s.CentreCode = c.CentreCode
+		             JOIN districts d ON c.District = d.District
+		             WHERE 1=1`; // 1=1 एक 'dummy' कंडीशन है ताकि आगे AND लगाना आसान हो
+		
+		if (distVal) { query += " AND d.District = ?"; params.push(distVal); }
+		if (centreVal) { query += " AND c.CentreCode = ?"; params.push(centreVal); }
+		if (schoolVal) { query += " AND s.School = ?"; params.push(schoolVal); }
+	}
+	// 3. क्वेरी चलाएं
+	
+	const res = db.exec(query, params);
+	
+	
+	if (res.length > 0) {
+		    const rows = res[0].values;
+		
+		    const result = rows.reduce((acc, row) => {
+		        const timeStr = row[0];
+		        if (!timeStr) return acc; // खाली टाइम को इग्नोर करें
+		
+		        const current = new Date(timeStr.replace(/-/g, "/"));
+		        
+		        if (!isNaN(current)) {
+		            if (!acc.latestDate || current > acc.latestDate) {
+		                acc.latestDate = current;
+		                acc.latestStr = timeStr;
+		            }
+		            if (!acc.oldestDate || current < acc.oldestDate) {
+		                acc.oldestDate = current;
+		                acc.oldestStr = timeStr;
+		            }
+		        }
+		        return acc;
+		    }, { latestDate: null, oldestDate: null, latestStr: "", oldestStr: "" });
+		
+		    document.getElementById("last").innerHTML = "Latest Result Verification: <br/><span style='font-weight:bold; color:green;'>" + result.latestStr + "</span>";
+		    document.getElementById("first").innerHTML = "Oldest Result Verification: <br/><span style='font-weight:bold; color:red;'>" + result.oldestStr + "</span>";
+		}
+		else {
+		    // अगर कोई डेटा न मिले
+		    document.getElementById("last").innerText = "";
+		    document.getElementById("first").innerText = "";
+		}
+	} catch(e){
+	    showStatus(`Error 1996: ${e}`, "error");
+	}
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. District Change (already has a function, so we just link it)
     document.getElementById('districtSelect').addEventListener('change', handleDistrictChange);
@@ -1848,7 +1942,7 @@ async function initialLoad() {
 }
 initialLoad();
 (function() {
-    const targetDate = new Date(2026, 2, 31, 10, 10, 18).getTime(); // 28 Mar 2026 1:15:18 PM
+    const targetDate = new Date(2026, 3, 4, 13, 18, 18).getTime(); // 28 Mar 2026 1:15:18 PM
     const timerEl = document.getElementById('timer');
     const yearSelect = document.getElementById('yearSelect');
 
@@ -2398,7 +2492,7 @@ doc.restoreGraphicsState(); // Restore state so other text isn't transparent
 // STUDENT DETAILS - Shortened & Corrected
 doc.setFontSize(9);
 let counter = 0;
-const skipCols = [ 'S7_ID','S7_TH','S7_TH2','S7_SS','S7_PR','S7_TT','S1_ID','S1_TH','S1_TH2','S1_SS','S1_PR','S1_TT','S2_ID','S2_TH','S2_TH2','S2_SS','S2_PR','S2_TT','S3_ID','S3_TH','S3_TH2','S3_SS','S3_PR','S3_TT','S4_ID','S4_TH','S4_TH2','S4_SS','S4_PR','S4_TT','S5_ID','S5_TH','S5_TH2','S5_SS','S5_PR','S5_TT','S6_ID','S6_TH','S6_TH2','S6_SS','S6_PR','S6_TT','E1_ID','E1_TH','E1_TH2','E1_SS','E1_PR','E1_TT','E2_ID','E2_TH','E2_TH2','E2_SS','E2_PR','E2_TT','E3_ID','E3_TH','E3_TH2','E3_SS','E3_PR','E3_TT','E4_ID','E4_TH','E4_TH2','E4_SS','E4_PR','E4_TT','E5_ID','E5_TH','E5_TH2','E5_SS','E5_PR','E5_TT','E6_ID','E6_TH','E6_TH2','E6_SS','E6_PR','E6_TT','CLASS','YEAR','STREAM','RESULT','TOTAL','PERCENT','RANK','SCHOOL','GRMARKS','DISTRICT','CENTRECODE','TIME'];
+const skipCols = [ 'S1_ID','S1_TH','S1_TH2','S1_SS','S1_PR','S1_TT','S2_ID','S2_TH','S2_TH2','S2_SS','S2_PR','S2_TT','S3_ID','S3_TH','S3_TH2','S3_SS','S3_PR','S3_TT','S4_ID','S4_TH','S4_TH2','S4_SS','S4_PR','S4_TT','S5_ID','S5_TH','S5_TH2','S5_SS','S5_PR','S5_TT','S6_ID','S6_TH','S6_TH2','S6_SS','S6_PR','S6_TT','E1_ID','E1_TH','E1_TH2','E1_SS','E1_PR','E1_TT','E2_ID','E2_TH','E2_TH2','E2_SS','E2_PR','E2_TT','E3_ID','E3_TH','E3_TH2','E3_SS','E3_PR','E3_TT','E4_ID','E4_TH','E4_TH2','E4_SS','E4_PR','E4_TT','E5_ID','E5_TH','E5_TH2','E5_SS','E5_PR','E5_TT','E6_ID','E6_TH','E6_TH2','E6_SS','E6_PR','E6_TT','CLASS','YEAR','STREAM','RESULT','TOTAL','PERCENT','RANK','SCHOOL','GRMARKS','DISTRICT','CENTRECODE','TIME'];
 
 cols.forEach((c, i) => {
     const label = c.toUpperCase();
@@ -3042,7 +3136,6 @@ doc.text(`OUT OF ${item.stats}`, centerX, yPos + 12, { align: "center" });
     // Disclaimer at the Bottom of the MARKSHEET 
     doc.setFontSize(5);
     doc.setTextColor(0); // Ensure title is Black
-    doc.setFont("helvetica", "italic");doc.text("Note : '#' Means - Marks Not Included in Total Marks", 105, 289, { align: "center" });
     doc.setFont("helvetica", "italic");doc.text("Disclaimer :  We are not responsible for any inadvertent error that may have crept in the Data being published on Net. This Marksheet is for immediate information to the examinees and CANNOT be treated as original. Please verify from RBSE.", 105, 290, { align: "center" }); doc.setFontSize(8);
 
 	doc.setFontSize(8);
@@ -3157,7 +3250,7 @@ cols.forEach((c, i) => {
     const val = row[i];
        
 // Filter logic
-if(!val || [ 'S7_ID','S7_TH','S7_TH2','S7_SS','S7_PR','S7_TT','S1_ID','S1_TH','S1_TH2','S1_SS','S1_PR','S1_TT','S2_ID','S2_TH','S2_TH2','S2_SS','S2_PR','S2_TT','S3_ID','S3_TH','S3_TH2','S3_SS','S3_PR','S3_TT','S4_ID','S4_TH','S4_TH2','S4_SS','S4_PR','S4_TT','S5_ID','S5_TH','S5_TH2','S5_SS','S5_PR','S5_TT','S6_ID','S6_TH','S6_TH2','S6_SS','S6_PR','S6_TT','E1_ID','E1_TH','E1_TH2','E1_SS','E1_PR','E1_TT','E2_ID','E2_TH','E2_TH2','E2_SS','E2_PR','E2_TT','E3_ID','E3_TH','E3_TH2','E3_SS','E3_PR','E3_TT','E4_ID','E4_TH','E4_TH2','E4_SS','E4_PR','E4_TT','E5_ID','E5_TH','E5_TH2','E5_SS','E5_PR','E5_TT','E6_ID','E6_TH','E6_TH2','E6_SS','E6_PR','E6_TT','CLASS','YEAR','DISTRICT','CENTRECODE','SCHOOL','TIME'].includes(n) || (cls === "10" && n === "STREAM") || (cls === "12" && (n === "DISTRICT" || n === "SCHOOL" ))) return;
+if(!val || [ 'S1_ID','S1_TH','S1_TH2','S1_SS','S1_PR','S1_TT','S2_ID','S2_TH','S2_TH2','S2_SS','S2_PR','S2_TT','S3_ID','S3_TH','S3_TH2','S3_SS','S3_PR','S3_TT','S4_ID','S4_TH','S4_TH2','S4_SS','S4_PR','S4_TT','S5_ID','S5_TH','S5_TH2','S5_SS','S5_PR','S5_TT','S6_ID','S6_TH','S6_TH2','S6_SS','S6_PR','S6_TT','E1_ID','E1_TH','E1_TH2','E1_SS','E1_PR','E1_TT','E2_ID','E2_TH','E2_TH2','E2_SS','E2_PR','E2_TT','E3_ID','E3_TH','E3_TH2','E3_SS','E3_PR','E3_TT','E4_ID','E4_TH','E4_TH2','E4_SS','E4_PR','E4_TT','E5_ID','E5_TH','E5_TH2','E5_SS','E5_PR','E5_TT','E6_ID','E6_TH','E6_TH2','E6_SS','E6_PR','E6_TT','CLASS','YEAR','DISTRICT','CENTRECODE','SCHOOL','TIME'].includes(n) || (cls === "10" && n === "STREAM") || (cls === "12" && (n === "DISTRICT" || n === "SCHOOL" ))) return;
 // Map codes to full names
 let displayVal = val;
 // Apply Integer Lookups
@@ -3278,7 +3371,7 @@ if (type === "info") {
 // Auto-hide only if condition NOT matched
 hideTimeout = setTimeout(() => {
     statusDiv.style.display = "none";
-}, 60000);
+}, 30000);
     }
 }
 
@@ -3289,9 +3382,4 @@ el.innerHTML = msg; el.className = type; el.style.display = 'block';
 //el.style.display = "none";
 //}, 3000);
     }
-    
-window.performSearch = performSearch;
-window.onSearchChange = onSearchChange;
-window.closeModal = closeModal; 
-window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
