@@ -3043,7 +3043,7 @@ doc.text(`OUT OF ${item.stats}`, centerX, yPos + 12, { align: "center" });
     // Disclaimer at the Bottom of the MARKSHEET 
     doc.setFontSize(5);
     doc.setTextColor(0); // Ensure title is Black
-    doc.setFont("helvetica", "italic");doc.text("Note : '#' Means - Marks Not Included in Total Marks", 105, 289, { align: "center" });
+    doc.setFont("helvetica", "italic");doc.text("Note : '#' Means - Marks Not Included in Total Marks", 105, 287, { align: "center" });
     doc.setFont("helvetica", "italic");doc.text("Disclaimer :  We are not responsible for any inadvertent error that may have crept in the Data being published on Net. This Marksheet is for immediate information to the examinees and CANNOT be treated as original. Please verify from RBSE.", 105, 290, { align: "center" }); doc.setFontSize(8);
 
 	doc.setFontSize(8);
