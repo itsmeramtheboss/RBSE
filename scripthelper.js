@@ -41,6 +41,7 @@ export function getMasterUrl(year, cls) {
 
     // सालों के हिसाब से रेपो चुनें (अपनी सुविधा अनुसार बदलें)
     if (year == 2026 && cls == 12) repo = "R26-12";
+    else if (year == 2026 && cls == 10) repo = "R26-10";
 	else if (year >= 2001 && year <= 2003) repo = "R01";
 	else if (year >= 2004 && year <= 2006) repo = "R02";
 	else if (year >= 2007 && year <= 2009) repo = "R03";
