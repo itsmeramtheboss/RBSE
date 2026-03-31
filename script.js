@@ -10,6 +10,7 @@ let SQL_ENGINE = null;
 let loadedDbKey = ""; 
 let db = null;
 let subjectdb = null;
+let subDir = `https://ramnivasbishnoi.github.io/R29/`;
 let subjectsList = new Set();
 let hideTimeout;
 const schoolNameCache = {}; // Global store for school names: { "pureID": "School Name" }
@@ -293,7 +294,7 @@ loadedDbKey = key;
 // 4. Subject DB को भी सुरक्षित तरीके से हैंडल करें
 if (subjectdb) subjectdb.close(); subjectdb = null;
 //if (!subjectdb) showStatus("subjectdb file closed","error");
-const subresponse = await fetch(`https://ramnivasbishnoi.github.io/R29/Subjects.db?token=${ACCESS_TOKEN}`);
+const subresponse = await fetch(`${subDir}Subjects.db?token=${ACCESS_TOKEN}`);
 //showStatus(`Subject DB Load: ${subresponse.status} ${subresponse.ok ? '(OK)' : '(FAILED)'}`, "info");
 if (subresponse.ok) {
     const subuf = await subresponse.arrayBuffer();
@@ -805,7 +806,7 @@ distGroups[dCode].push(row);
 const SQL = await getSQLEngine();
 
 // 3. Subjects.db को सिर्फ एक बार (लूप के बाहर) लोड करें
-const subRes = await fetch(`https://ramnivasbishnoi.github.io/R29/Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
+const subRes = await fetch(`${subDir}Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
 const subBuf = await subRes.arrayBuffer();
 const subjectdb = new SQL.Database(new Uint8Array(subBuf));
 
@@ -3292,7 +3293,7 @@ el.innerHTML = msg; el.className = type; el.style.display = 'block';
     
 window.performSearch = performSearch;
 window.onSearchChange = onSearchChange;
-window.showModal = showModal; 
 window.closeModal = closeModal; 
+window.showModal = showModal; 
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */

@@ -4,6 +4,7 @@ let SQL_ENGINE = null;
 let loadedDbKey = ""; 
 let db = null;
 let subjectdb = null;
+let subDir = `https://ramnivasbishnoi.github.io/R29/`;
 let subjectsList = new Set();
 let hideTimeout;
 const schoolNameCache = {}; // Global store for school names: { "pureID": "School Name" }
@@ -30,7 +31,7 @@ export function getDBUrl(year, cls, dCode) {
 	else if (year >= 2019 && year <= 2021) repo = "R07";
 	else if (year >= 2022 && year <= 2024) repo = "R08";
 	else  repo = "R29";
-
+    subDir = `https://${user}.github.io/${repo}/`;
     
     return `https://${user}.github.io/${repo}/AllResult${year}-${cls}-${dCode}.db`;
     
@@ -51,7 +52,7 @@ export function getMasterUrl(year, cls) {
 	else if (year >= 2019 && year <= 2021) repo = "R07";
 	else if (year >= 2022 && year <= 2024) repo = "R08";
 	else  repo = "R29";
-
+    subDir = `https://${user}.github.io/${repo}/`;
     
     return `https://${user}.github.io/${repo}/AllResult${year}-${cls}`;
     
@@ -313,7 +314,7 @@ loadedDbKey = key;
 // 4. Subject DB को भी सुरक्षित तरीके से हैंडल करें
 if (subjectdb) subjectdb.close(); subjectdb = null;
 //if (!subjectdb) showStatus("subjectdb file closed","error");
-const subresponse = await fetch(`https://ramnivasbishnoi.github.io/R29/Subjects.db?token=${ACCESS_TOKEN}`);
+const subresponse = await fetch(`${subDir}Subjects.db?token=${ACCESS_TOKEN}`);
 //showStatus(`Subject DB Load: ${subresponse.status} ${subresponse.ok ? '(OK)' : '(FAILED)'}`, "info");
 if (subresponse.ok) {
     const subuf = await subresponse.arrayBuffer();
@@ -825,7 +826,7 @@ distGroups[dCode].push(row);
 const SQL = await getSQLEngine();
 
 // 3. Subjects.db को सिर्फ एक बार (लूप के बाहर) लोड करें
-const subRes = await fetch(`https://ramnivasbishnoi.github.io/R29/Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
+const subRes = await fetch(`${subDir}Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
 const subBuf = await subRes.arrayBuffer();
 const subjectdb = new SQL.Database(new Uint8Array(subBuf));
 
