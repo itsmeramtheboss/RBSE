@@ -3324,5 +3324,6 @@ window.onSearchChange = onSearchChange;
 window.closeModal = closeModal; 
 window.showModal = showModal; 
 window.sortTable = sortTable;
+window.downloadBatchPDF = downloadBatchPDF;
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
