@@ -404,17 +404,19 @@ async function performSearch() {
 
     // 3. Validation
     if (!inputVal && !schoolVal && !centreVal) { 
-     showStatus(`Enter Roll Number, Name, \nor select a Centre/School first`, "error"); 
+     //showStatus(`Enter Roll Number, Name, \nor select a Centre/School first`, "error"); 
       //toggleSearch(false); //UN
       //return; 
     }
     if (!inputVal && !distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
         searchInputEl.placeholder = "Top 200 All Rajasthan";
+        showStatus(`Showinge TOP 200 Students from all Rajasthan`, "info"); 
     } 
     else if (!inputVal && distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
         searchInputEl.placeholder = `Top 100 of District ${districtName}`;
+        showStatus(`Showinge TOP 100 Students from all ${districtName}`, "info"); 
     } 
     
     
@@ -2342,19 +2344,25 @@ generateResultPage(doc, roll, cls, year, studentRow, window.currentCols);
 // Get the selected district value
     	const distVal = document.getElementById('districtSelect').value;
 // Get Centre
-const centreVal = document.getElementById('centreSelect').value; 
+        const centreVal = document.getElementById('centreSelect').value; 
 // Get selected school
     	const schoolVal = document.getElementById('schoolSelect').value; 
-   
+        const districtName = districts[distVal] || "All Districts";
 if(!inputVal){
 	if(schoolVal){
-		    doc.save(`${schoolVal}_Batch_${year}-${cls}.pdf`);
-                  }
-   else {    
-   doc.save(`${centreVal}_Batch_${year}-${cls}.pdf`);
-                  }
+		                doc.save(`${schoolVal}_Batch_${year}-${cls}.pdf`);
+                        }
+    else if (centreVal && !schoolVal) {    
+                       doc.save(`${centreVal}_Batch_${year}-${cls}.pdf`);
+                      }
+    else if (distVal && !centreVal && !schoolVal) {    
+                       doc.save(`Top-100-${districtName}_Batch_${year}-${cls}.pdf`);
+                      }
+    else {    
+                       doc.save(`Top-200-All-Rajasthan-Batch_${year}-${cls}.pdf`);
+                      }
 
-             }
+            }
 else{
     doc.save(`Batch_${inputVal}_${year}-${cls}.pdf`);
     }
