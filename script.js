@@ -1334,7 +1334,7 @@ options.forEach(opt => {
 
 
 async function updateGlobalCounts(db) {
-	const cls = document.querySelector('input[name="class"]:checked').value;
+	const cls = Number(document.querySelector('input[name="class"]:checked').value);
     const year = document.getElementById('yearSelect').value;
     
 	const key = `${year}-${cls}-master`;
