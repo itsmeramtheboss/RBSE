@@ -3323,5 +3323,6 @@ window.performSearch = performSearch;
 window.onSearchChange = onSearchChange;
 window.closeModal = closeModal; 
 window.showModal = showModal; 
+window.sortTable = sortTable;
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
