@@ -1509,47 +1509,47 @@ async function handleDistrictChange() {
     schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
 
     if (!newDistCode) { 
-centreSelect.innerHTML = '<option value="">-- All Centres --</option>';
-schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
-    document.getElementById('centreGroup').style.display = 'none';
-    document.getElementById('schoolGroup').style.display = 'none';
-// Use the currently loaded global database to update counts
-if (db) {
-    await updateGlobalCounts(db);
-    await updateVerificationDate(db);
-     }
-   toggleSearch(false);
-   return; 
+          centreSelect.innerHTML = '<option value="">-- All Centres --</option>';
+          schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
+          document.getElementById('centreGroup').style.display = 'none';
+          document.getElementById('schoolGroup').style.display = 'none';
+       // Use the currently loaded global database to update counts
+      if (db) {
+          await updateGlobalCounts(db);
+          await updateVerificationDate(db);
+          }
+         toggleSearch(false);
+         return; 
        }
 
     try {
-const SQL = await getSQLEngine();
-const cls = document.querySelector('input[name="class"]:checked').value;
-const selectedYear = parseInt(document.getElementById('yearSelect').value);
-const time = Date.now();
-			    const dbUrl = getDBUrl(selectedYear, cls, newDistCode);
-const response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);
-const buf = await response.arrayBuffer();
-const tempDb = new SQL.Database(new Uint8Array(buf));
+        const SQL = await getSQLEngine();
+        const cls = document.querySelector('input[name="class"]:checked').value;
+        const selectedYear = parseInt(document.getElementById('yearSelect').value);
+        const time = Date.now();
+        const dbUrl = getDBUrl(selectedYear, cls, newDistCode);
+        const response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);
+        const buf = await response.arrayBuffer();
+        const tempDb = new SQL.Database(new Uint8Array(buf));
 
 //db = await getDatabase(selectedYear, cls);
 // ADD THIS LINE HERE
-await updateGlobalCounts(db); 
-await updateVerificationDate(db);
-const rawData = tempDb.exec(`
-    SELECT c.CentreCode, s.School, s.SchoolName, c.District, COUNT(s.School) OVER(PARTITION BY c.CentreCode) as SchCount
-    FROM centres c
-    JOIN schools s ON c.CentreCode = s.CentreCode
-    JOIN districts d ON c.District = d.District
-    WHERE d.DisCode = '${newDistCode}' OR d.District = '${newDistCode}'
-    ORDER BY s.SchoolName ASC
-`);
+        await updateGlobalCounts(db); 
+        await updateVerificationDate(db);
+        const rawData = tempDb.exec(`
+            SELECT c.CentreCode, s.School, s.SchoolName, c.District, COUNT(s.School) OVER(PARTITION BY c.CentreCode) as SchCount
+            FROM centres c
+            JOIN schools s ON c.CentreCode = s.CentreCode
+            JOIN districts d ON c.District = d.District
+            WHERE d.DisCode = '${newDistCode}' OR d.District = '${newDistCode}'
+            ORDER BY s.SchoolName ASC
+        `);
 
-if (rawData.length > 0) {
-    const rows = rawData[0].values;
-    const centresMap = {};
-    let foundSavedSchoolCode = null;
-    let foundSavedSchoolCentre = null;
+        if (rawData.length > 0) {
+            const rows = rawData[0].values;
+            const centresMap = {};
+            let foundSavedSchoolCode = null;
+            let foundSavedSchoolCentre = null;
 
     const normalize7Digit = (code, dCode) => {
         const s = String(code || "").trim();
@@ -1670,11 +1670,11 @@ async function handleCentreChange() {
     const schoolSelect = document.getElementById('schoolSelect');
     
     if (!centreVal) {
-const currentSchool = schoolSelect.value;
-await handleDistrictChange(); 
-schoolSelect.value = currentSchool;
-toggleSearch(false); // UNLOCK
-return;
+        const currentSchool = schoolSelect.value;
+        await handleDistrictChange(); 
+        schoolSelect.value = currentSchool;
+        toggleSearch(false); // UNLOCK
+        return;
     }
 
     try {
@@ -1750,7 +1750,7 @@ return;
 
 
 async function onYearOrClassChange() {
-toggleSearch(true);
+        toggleSearch(true);
 	const year = document.getElementById('yearSelect').value;
     const cls = document.querySelector('input[name="class"]:checked').value;
    
@@ -1768,7 +1768,7 @@ toggleSearch(true);
 		    await handleDistrictChange();
     }
     finally {
-toggleSearch(false); // खत्म होते ही रिलीज करें
+        toggleSearch(false); // खत्म होते ही रिलीज करें
     }
 }
 
@@ -1780,13 +1780,13 @@ function onSearchChange() {
     //searchInput.value = ""; // पिछला इनपुट साफ करें
     
     if (searchType === "roll") {
-searchInput.placeholder = "Enter Roll (e.g. 1234 OR 1000-1234)";
+        searchInput.placeholder = "Enter Roll (e.g. 1234 OR 1000-1234)";
 // 'numeric' मोड से नंबर और डैश वाला कीबोर्ड खुलेगा
-searchInput.setAttribute("inputmode", "numeric");
+        searchInput.setAttribute("inputmode", "numeric");
     } else {
-searchInput.placeholder = "Enter Name (e.g. RameshKumar)";
+        searchInput.placeholder = "Enter Name (e.g. RameshKumar)";
 // 'text' मोड से सामान्य कीबोर्ड खुलेगा
-searchInput.setAttribute("inputmode", "text");
+        searchInput.setAttribute("inputmode", "text");
     }
 }
 
@@ -1796,18 +1796,19 @@ document.getElementById('searchInput').addEventListener('input', function (e) {
     let value = e.target.value;
 
     if (searchType === "roll") {
-// सिर्फ नंबर और सिंगल डैश (-) की अनुमति
-// यह रेगुलर एक्सप्रेशन डैश और नंबर के अलावा सब हटा देगा
-e.target.value = value.replace(/[^0-9-]/g, '');
-// यह सुनिश्चित करने के लिए कि एक से ज्यादा डैश न हों
-if ((e.target.value.match(/-/g) || []).length > 1) {
-    e.target.value = value.slice(0, -1);
-}
+        // सिर्फ नंबर और सिंगल डैश (-) की अनुमति
+        // यह रेगुलर एक्सप्रेशन डैश और नंबर के अलावा सब हटा देगा
+        e.target.value = value.replace(/[^0-9-]/g, '');
+        // यह सुनिश्चित करने के लिए कि एक से ज्यादा डैश न हों
+        if ((e.target.value.match(/-/g) || []).length > 1) {
+            e.target.value = value.slice(0, -1);
+        }
     } else if (searchType === "name") {
-// सिर्फ अल्फाबेट (A-Z, a-z) और स्पेस की अनुमति
-e.target.value = value.replace(/[^a-zA-Z\s]/g, '');
+        // सिर्फ अल्फाबेट (A-Z, a-z) और स्पेस की अनुमति
+        e.target.value = value.replace(/[^a-zA-Z\s]/g, '');
     }
 });
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1816,14 +1817,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Centre Change (updates counts for selected centre)
     document.getElementById('centreSelect').addEventListener('change', async () => {
-await handleCentreChange();
-if (db) await updateGlobalCounts(db); await updateVerificationDate(db);
-    });
+         await handleCentreChange();
+           if (db) {
+                        toggleSearch(true);
+                     try{
+                     await updateGlobalCounts(db); 
+                     await updateVerificationDate(db);
+                         } 
+                     finally {
+                         toggleSearch(false);
+                                }
+                       }
+       });
 
     // 3. School Change (updates counts for specific school)
     document.getElementById('schoolSelect').addEventListener('change', async () => {
-if (db) await updateGlobalCounts(db); await updateVerificationDate(db);
-    });
+           if (db) {
+                        toggleSearch(true);
+                     try{
+                     await updateGlobalCounts(db); 
+                     await updateVerificationDate(db);
+                         } 
+                     finally {
+                         toggleSearch(false);
+                                }
+                       }
+        });
 });
 
     // year/class change listener
@@ -1834,6 +1853,8 @@ if (db) await updateGlobalCounts(db); await updateVerificationDate(db);
 // Add this to the end of your DOMContentLoaded
 async function initialLoad() {
     toggleSearch(true);
+    showStatus("1887: starts");
+    await sleep(5000);
     const year = document.getElementById('yearSelect').value;
     const cls = document.querySelector('input[name="class"]:checked').value;
     // Pre-load the DB so counters work even before the first search

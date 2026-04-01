@@ -1846,7 +1846,7 @@ try {
 		const distVal = document.getElementById('districtSelect').value;
 		const centreVal = document.getElementById('centreSelect').value;
 		const schoolVal = document.getElementById('schoolSelect').value;
-	if(!db) {showStatus("Data not available", "error"); return; }
+	if(!db) {showStatus("Data not available Please refresh the Page.", "error"); return; }
 	// 2. डायनामिक क्वेरी बनाएँ
 	let query;
 	const params = [];
