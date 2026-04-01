@@ -1932,8 +1932,8 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     }
     else if (type === 'SCHOOL') {
     	const targetYear = parseInt(currentYear) <= 2021 ? 2021 : 2025;
-    	const dbUrl =getMasterUrl(targetYear,currentCls);
-    	dbFile = `${dbUrl}-master.db`;
+    	const dbmUrl =getMasterUrl(targetYear,currentCls);
+    	dbFile = `${dbmUrl}-master.db`;
     	dbyear = `${targetYear}`;
     	let rawSchool = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'school')]);
     	let distCode = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'district')]);
