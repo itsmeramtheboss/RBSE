@@ -1910,10 +1910,13 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     const name = studentRow[cols.findIndex(c => c.toUpperCase() === 'NAME')];
     const father = studentRow[cols.findIndex(c => c.toUpperCase() === 'FATHER')];
     const mother = studentRow[cols.findIndex(c => c.toUpperCase() === 'MOTHER')];
-    
+    const dist = studentRow[cols.findIndex(c => c.toUpperCase() === 'DISTRICT')];
+    showStatus(`FallBack District:${dist}`,"info");
+    await sleep(5000);
     if (type === 'DOB') {
 dbyear = `${parseInt(currentYear)-2}`;
-dbFile = `AllResult${dbyear}-10.db`;
+const dbUrl = getDBUrl(dbyear, 10, dist);
+dbFile = `${dbUrl}`;
 query = `SELECT DOB FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
     // --- ADD THIS BLOCK ---
@@ -1921,7 +1924,9 @@ query = `SELECT DOB FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${f
 // Look in the Class 10 DB of 2 years ago (standard for 12thies) 
 // or current year Class 10 if looking for a 10th student
 dbyear = currentCls === '12' ? `${parseInt(currentYear)-2}` : currentYear;
-dbFile = `AllResult${dbyear}-10.db`;
+//getDBUrl(year, cls, dCode) 
+const dbUrl = getDBUrl(dbyear, 10, dist);
+dbFile = `${dbUrl}`;
 query = `SELECT Caste FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
     else if (type === 'SCHOOL') {

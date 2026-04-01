@@ -62,7 +62,27 @@ export function getMasterUrl(year, cls) {
     return `https://${user}.github.io/${repo}/AllResult${year}-${cls}`;
     
 }
+export function getRepoUrl(year, cls, dCode) {
+    const user = "ramnivasbishnoi"; // https://ramnivasbishnoi.github.io/R29/अपना GitHub यूजरनेम यहाँ लिखें
+    let repo = "";
 
+    // सालों के हिसाब से रेपो चुनें (अपनी सुविधा अनुसार बदलें)
+    if (year == 2026 && cls == 12) repo = "R26-12";
+    else if (year == 2026 && cls == 10) repo = "R26-10";
+	else if (year >= 2001 && year <= 2003) repo = "R01";
+	else if (year >= 2004 && year <= 2006) repo = "R02";
+	else if (year >= 2007 && year <= 2009) repo = "R03";
+	else if (year >= 2010 && year <= 2012) repo = "R04";
+	else if (year >= 2013 && year <= 2015) repo = "R05";
+	else if (year >= 2016 && year <= 2018) repo = "R06";
+	else if (year >= 2019 && year <= 2021) repo = "R07";
+	else if (year >= 2022 && year <= 2024) repo = "R08";
+	else  repo = "R29";
+    globalState.subDir = `https://${user}.github.io/${repo}/`;
+    
+    return `https://${user}.github.io/${repo}/AllResult${year}-${cls}-${dCode}.db`;
+    
+}
 
 export function toggleSearch(disabled) {
     const btn = document.getElementById('searchBtn');
