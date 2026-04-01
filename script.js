@@ -1926,7 +1926,7 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     	// or current year Class 10 if looking for a 10th student
     	dbyear = currentCls === '12' ? `${parseInt(currentYear)-2}` : currentYear;
     	//getDBUrl(year, cls, dCode) 
-    	#const dbUrl = getDBUrl(dbyear, 10, dist);
+    	//const dbUrl = getDBUrl(dbyear, 10, dist);
     	dbFile = `${dbUrl}`;
     	query = `SELECT Caste FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
