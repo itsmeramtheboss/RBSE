@@ -521,7 +521,10 @@ async function performSearch() {
 				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 200`;
 				} else if (!inputVal && distVal && !centreVal && !schoolVal) {
 				    query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 100`;
-               }
+               } else {
+               	mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC`;
+                   query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC`;
+              }
 		if(!distVal) {
 			//showStatus("730","info");
 		    //await sleep(1000); 
@@ -2766,8 +2769,8 @@ doc.text(`${perc} %`, 95, 80, {
 }
 doc.setFontSize(20);
 doc.setTextColor(150); // Light gray
-doc.setFont("helvetica", "bold");
-doc.text("WhatsApp 9799085769", 115, 230, {
+doc.setFont("helvetica", "bold"); //115,230
+doc.text("WhatsApp 9799085769", 115, 200, {
     align: "center",
   //  angle: 45
 });
