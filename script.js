@@ -410,11 +410,11 @@ async function performSearch() {
     }
     if (!inputVal && !distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
-        searchInputEl.placeholder = "Top 1000 All Rajasthan";
+        searchInputEl.placeholder = "Top 200 All Rajasthan";
     } 
     else if (!inputVal && distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
-        searchInputEl.placeholder = `Top 1000 of District ${districtName}`;
+        searchInputEl.placeholder = `Top 100 of District ${districtName}`;
     } 
     
     
@@ -516,9 +516,9 @@ async function performSearch() {
 		const SQL = await getSQLEngine();
 		    // mquery के अंत में यह जोड़ें ताकि Toppers को शॉर्ट कर सकें
 				if (!inputVal && !distVal && !centreVal && !schoolVal) {
-				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 1000`;
+				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 200`;
 				} else if (!inputVal && distVal && !centreVal && !schoolVal) {
-				    query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 1000`;
+				    query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 100`;
                }
 		if(!distVal) {
 			//showStatus("730","info");
@@ -1910,11 +1910,13 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     const father = studentRow[cols.findIndex(c => c.toUpperCase() === 'FATHER')];
     const mother = studentRow[cols.findIndex(c => c.toUpperCase() === 'MOTHER')];
     const dist = studentRow[cols.findIndex(c => c.toUpperCase() === 'DISTRICT')];
-    showStatus(`FallBack District:${dist}`,"info");
-    await sleep(5000);
-    if (type === 'DOB') {
+   // showStatus(`FallBack District:${dist}`,"info");
+  //  await sleep(5000);
+  
     	dbyear = `${parseInt(currentYear)-2}`;
     	const dbUrl = getDBUrl(dbyear, 10, dist);
+    
+    if (type === 'DOB') {
     	dbFile = `${dbUrl}`;
     	query = `SELECT DOB FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
@@ -1924,7 +1926,7 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     	// or current year Class 10 if looking for a 10th student
     	dbyear = currentCls === '12' ? `${parseInt(currentYear)-2}` : currentYear;
     	//getDBUrl(year, cls, dCode) 
-    	const dbUrl = getDBUrl(dbyear, 10, dist);
+    	#const dbUrl = getDBUrl(dbyear, 10, dist);
     	dbFile = `${dbUrl}`;
     	query = `SELECT Caste FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
