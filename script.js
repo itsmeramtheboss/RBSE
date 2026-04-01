@@ -371,7 +371,8 @@ async function performSearch() {
     const heading = document.getElementById("resultsTableWrapper");
     heading.scrollIntoView({ behavior: "smooth" });
     
-    
+    const headdown = document.getElementById("searchClick");
+    headdown.scrollIntoView({ behavior: "smooth" });
     // 1. Reset Sorting Memory
     originalRows = []; 
     currentSort = { colIndex: -1, state: 0 };
@@ -1853,8 +1854,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add this to the end of your DOMContentLoaded
 async function initialLoad() {
     toggleSearch(true);
-    showStatus("1887: starts");
-    await sleep(5000);
     const year = document.getElementById('yearSelect').value;
     const cls = document.querySelector('input[name="class"]:checked').value;
     // Pre-load the DB so counters work even before the first search
@@ -1914,55 +1913,56 @@ async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear
     showStatus(`FallBack District:${dist}`,"info");
     await sleep(5000);
     if (type === 'DOB') {
-dbyear = `${parseInt(currentYear)-2}`;
-const dbUrl = getDBUrl(dbyear, 10, dist);
-dbFile = `${dbUrl}`;
-query = `SELECT DOB FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
+    	dbyear = `${parseInt(currentYear)-2}`;
+    	const dbUrl = getDBUrl(dbyear, 10, dist);
+    	dbFile = `${dbUrl}`;
+    	query = `SELECT DOB FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
     // --- ADD THIS BLOCK ---
     else if (type === 'CASTE') {
-// Look in the Class 10 DB of 2 years ago (standard for 12thies) 
-// or current year Class 10 if looking for a 10th student
-dbyear = currentCls === '12' ? `${parseInt(currentYear)-2}` : currentYear;
-//getDBUrl(year, cls, dCode) 
-const dbUrl = getDBUrl(dbyear, 10, dist);
-dbFile = `${dbUrl}`;
-query = `SELECT Caste FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
+    	// Look in the Class 10 DB of 2 years ago (standard for 12thies) 
+    	// or current year Class 10 if looking for a 10th student
+    	dbyear = currentCls === '12' ? `${parseInt(currentYear)-2}` : currentYear;
+    	//getDBUrl(year, cls, dCode) 
+    	const dbUrl = getDBUrl(dbyear, 10, dist);
+    	dbFile = `${dbUrl}`;
+    	query = `SELECT Caste FROM results WHERE Name LIKE '${name}%' AND Father LIKE '${father}%' AND Mother LIKE '${mother}%' LIMIT 1`;
     }
     else if (type === 'SCHOOL') {
-const targetYear = parseInt(currentYear) <= 2021 ? 2021 : 2025;
-dbFile = `AllResult${targetYear}-${currentCls}.db`;
-dbyear = `${targetYear}`;
-let rawSchool = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'school')]);
-let distCode = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'district')]);
-let normalizedSchool = rawSchool;
+    	const targetYear = parseInt(currentYear) <= 2021 ? 2021 : 2025;
+    	const dbUrl =getMasterUrl(targetYear,currentCls);
+    	dbFile = `${dbUrl}-master.db`;
+    	dbyear = `${targetYear}`;
+    	let rawSchool = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'school')]);
+    	let distCode = String(studentRow[cols.findIndex(c => c.toLowerCase() === 'district')]);
+    	let normalizedSchool = rawSchool;
 
-if (rawSchool.length !== 7) {
-    let newDist = parseInt(distCode) < 100 ? parseInt(distCode) + 100 : distCode;
-    let schoolPart = rawSchool.startsWith(distCode) ? rawSchool.substring(distCode.length) : rawSchool;
-    normalizedSchool = `${newDist}${schoolPart.padStart(4, '0')}`;
-}
-query = `SELECT SchoolName FROM schools WHERE School = '${normalizedSchool}' LIMIT 1`;
+        if (rawSchool.length !== 7) {
+    	    let newDist = parseInt(distCode) < 100 ? parseInt(distCode) + 100 : distCode;
+    	    let schoolPart = rawSchool.startsWith(distCode) ? rawSchool.substring(distCode.length) : rawSchool;
+    	    normalizedSchool = `${newDist}${schoolPart.padStart(4, '0')}`;
+    	}
+    	query = `SELECT SchoolName FROM schools WHERE School = '${normalizedSchool}' LIMIT 1`;
     }
 
     showStatus(`Searching ${type} in ${dbyear}...`, "info");
 
     try {
     	const time = Date.now();
-const resp = await fetch(`${dbFile}?token=${ACCESS_TOKEN}&v=${time}`);
-if (!resp.ok) return { value: null, error: `File ${dbFile} not found` };
-const buf = await resp.arrayBuffer();
-const fDb = new SQL.Database(new Uint8Array(buf));
-const res = fDb.exec(query);
-fDb.close();
+    	const resp = await fetch(`${dbFile}?token=${ACCESS_TOKEN}&v=${time}`);
+    	if (!resp.ok) return { value: null, error: `File ${dbFile} not found` };
+    	const buf = await resp.arrayBuffer();
+    	const fDb = new SQL.Database(new Uint8Array(buf));
+    	const res = fDb.exec(query);
+    	fDb.close();
 
-if (res.length && res[0].values.length) {
-    return { value: res[0].values[0][0], error: null };
-} else {
-    return { value: null, error: `${type} not in ${dbyear} archive` };
-}
+    	if (res.length && res[0].values.length) {
+     	   return { value: res[0].values[0][0], error: null };
+     	   } else {
+     	   return { value: null, error: `${type} not in ${dbyear} archive` };
+    	    }
     } catch (e) { 
-return { value: null, error: e.message };
+          return { value: null, error: e.message };
     }
 }
 
