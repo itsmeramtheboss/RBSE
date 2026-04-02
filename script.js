@@ -257,7 +257,6 @@ name = name.replace(new RegExp(`\\(?${distUpper}\\)?`, 'g'), '');
     return name.replace(/\s+/g, ' ');
 }
 
-
     function parseToUppercaseName(text) {
 return text.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
     }
@@ -270,47 +269,47 @@ let loadingPromise = null;
 async function getDatabase(year, cls) {
     const key = `${year}-${cls}-master`;
     if (db && loadedDbKey === key) return db;
+        console.log("get database started");
 
     	// यदि पहले से कोई लोड चल रहा है, तो उसी का इंतजार करें
     if (loadingPromise) return loadingPromise;
-loadingPromise = (async () => {
-  try {
-       showStatus(`Loading Data for ${year} ${cls}th...`, "info");
+    loadingPromise = (async () => {
+      try {
+           showStatus(`Loading Data for ${year} ${cls}th...`, "info");
     
-// 1. सबसे पहले डेटा लोड करें (पुराने DB को अभी बंद न करें)
-const time = Date.now();
-const dbUrl = getMasterUrl(year, cls);
-const response = await fetch(`${dbUrl}-master.db?token=${ACCESS_TOKEN}&v=${time}`);
-if (!response.ok) throw new Error("Data File not found.");
-const buf = await response.arrayBuffer();
-// 2. नया DB ऑब्जेक्ट तैयार करें
-const SQL = await getSQLEngine();
-const newDb = new SQL.Database(new Uint8Array(buf));
+    // 1. सबसे पहले डेटा लोड करें (पुराने DB को अभी बंद न करें)
+    const time = Date.now();
+    const dbUrl = getMasterUrl(year, cls);
+    const response = await fetch(`${dbUrl}-master.db?token=${ACCESS_TOKEN}&v=${time}`);
+    if (!response.ok) throw new Error("Data File not found.");
+    const buf = await response.arrayBuffer();
+    // 2. नया DB ऑब्जेक्ट तैयार करें
+    const SQL = await getSQLEngine();
+    const newDb = new SQL.Database(new Uint8Array(buf));
 
-// 3. अब सुरक्षित रूप से पुराना कनेक्शन बंद करें (Transaction-like update)
-if (db) db.close();
-db = newDb; // नया DB असाइन करें
-loadedDbKey = key;
-// 4. Subject DB को भी सुरक्षित तरीके से हैंडल करें
-if (subjectdb) subjectdb.close(); subjectdb = null;
-//if (!subjectdb) showStatus("subjectdb file closed","error");
-const subresponse = await fetch(`${globalState.subDir}Subjects.db?token=${ACCESS_TOKEN}`);
-//showStatus(`Subject DB Load: ${subresponse.status} ${subresponse.ok ? '(OK)' : '(FAILED)'}`, "info");
-if (subresponse.ok) {
-    const subuf = await subresponse.arrayBuffer();
-    subjectdb = new SQL.Database(new Uint8Array(subuf));
-}
-showStatus(`Data loaded successfully.`, "info");
-return db;
+    // 3. अब सुरक्षित रूप से पुराना कनेक्शन बंद करें (Transaction-like update)
+    if (db) db.close();
+    db = newDb; // नया DB असाइन करें
+    loadedDbKey = key;
+    // 4. Subject DB को भी सुरक्षित तरीके से हैंडल करें
+    if (subjectdb) subjectdb.close(); subjectdb = null;
+    //if (!subjectdb) showStatus("subjectdb file closed","error");
+    const subresponse = await fetch(`${globalState.subDir}Subjects.db?token=${ACCESS_TOKEN}`);
+    //showStatus(`Subject DB Load: ${subresponse.status} ${subresponse.ok ? '(OK)' : '(FAILED)'}`, "info");
+    if (subresponse.ok) {
+        const subuf = await subresponse.arrayBuffer();
+        subjectdb = new SQL.Database(new Uint8Array(subuf));
+    }
+    showStatus(`Data loaded successfully.`, "info");
+    return db;
 
     } catch (err) {
-showStatus(`Failed to load: ${err.message}`, "error");
-throw err;
+    showStatus(`Failed to load: ${err.message}`, "error");
+    throw err;
     } finally {
-    loadingPromise = null; // लोड पूरा होने पर रिसेट करें
-}
-    })();
-    
+        loadingPromise = null; // लोड पूरा होने पर रिसेट करें
+    }
+    })();   
     return loadingPromise;
 }
 
@@ -318,48 +317,47 @@ throw err;
 async function updateDistrictDropdown(db) {
     try {
     if(!db) {showStatus("Data not found", "error"); return;}
-const distSelect = document.getElementById('districtSelect');
-const currentSelectedValue = distSelect.value; // 1. वर्तमान सिलेक्शन को सेव करें
-// DB से वो सभी District Codes निकालें जो मौजूद हैं
+    const distSelect = document.getElementById('districtSelect');
+    const currentSelectedValue = distSelect.value; // 1. वर्तमान सिलेक्शन को सेव करें
+    // DB से वो सभी District Codes निकालें जो मौजूद हैं
 
     const cls = document.querySelector('input[name="class"]:checked').value;
     const year = document.getElementById('yearSelect').value;
     //const db = await getDatabase(year, cls);
 
-const key = `${year}-${cls}-master`;
-let res;
-if(loadedDbKey === key) {
-  res = db.exec("SELECT DISTINCT District FROM results");
-} else {
+    const key = `${year}-${cls}-master`;
+    let res;
+    if(loadedDbKey === key) {
+      res = db.exec("SELECT DISTINCT District FROM results");
+    } else {
 	res = db.exec("SELECT DISTINCT DisCode FROM districts");
-}
-if (res.length === 0) return;
+    }
+    if (res.length === 0) return;
 
-const dbCodes = res[0].values.map(row => String(row[0]));
-//const distSelect = document.getElementById('districtSelect');
-// पुरानी लिस्ट साफ़ करें और डिफ़ॉल्ट ऑप्शन डालें
-distSelect.innerHTML = '<option value="">-- Select District --</option>';
+    const dbCodes = res[0].values.map(row => String(row[0]));
+    //const distSelect = document.getElementById('districtSelect');
+    // पुरानी लिस्ट साफ़ करें और डिफ़ॉल्ट ऑप्शन डालें
+    distSelect.innerHTML = '<option value="">-- Select District --</option>';
 
-// अपनी Hardcoded 'districts' लिस्ट से मैच करके Filter करें
-Object.entries(districts).forEach(([code, name]) => {
-    if (dbCodes.includes(code)) {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.innerText = `${code} - ${name}`;
-        // 2. चेक करें कि क्या यह वही वैल्यू है जो यूजर ने चुनी थी
-        if (code === currentSelectedValue) {
-            opt.selected = true;
-        }                       
+    // अपनी Hardcoded 'districts' लिस्ट से मैच करके Filter करें
+    Object.entries(districts).forEach(([code, name]) => {
+        if (dbCodes.includes(code)) {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.innerText = `${code} - ${name}`;
+            // 2. चेक करें कि क्या यह वही वैल्यू है जो यूजर ने चुनी थी
+            if (code === currentSelectedValue) {
+                opt.selected = true;
+            }                       
         distSelect.appendChild(opt);
     }
 });
 console.log("District dropdown updated based on DB.");
     } catch (e) {
 console.error("Error updating districts:", e);
-showStatus(`Error 605 : ${e}`, "error");
+    showStatus(`Error 605 : ${e}`, "error");
     }
 }
-
 
 
 async function performSearch() {
@@ -551,9 +549,8 @@ async function performSearch() {
 	            return;
 	        }
 	         
-       console.log(JSON.stringify(masterResult, null, 2));
-      
-    
+       //console.log(JSON.stringify(masterResult, null, 2));
+          console.log("Result found in master...");
 		    // मास्टर रिजल्ट से डिस्ट्रिक्ट और रोल्स का मैप बनाना
 		const distMap = {}; // { distCode: [roll1, roll2, ...] }
 		const rows = masterResult[0].values;
@@ -569,7 +566,8 @@ async function performSearch() {
 		const count = masterResult[0].values.length;
 		totDis = Object.keys(distMap).length;
         showStatus(`Found ${count} Result${count > 1 ? 's' : ''} in ${totDis} District${totDis > 1 ? 's' : ''},\n getting full result data...`, "info");
-		console.log(JSON.stringify(distMap, null, 2));
+		//console.log(JSON.stringify(distMap, null, 2));
+		console.log("Got results from districts...");
 		
 		    // 2. हर डिस्ट्रिक्ट फाइल के लिए लूप चलाएं
 		    for (const districtCode in distMap) {
@@ -578,7 +576,7 @@ async function performSearch() {
 			            const cleanCode = String(districtCode).trim();
 			            const dbUrl = getDBUrl(year, cls, cleanCode);
 			            const distResponse = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);
-			            if(!distResponse.ok) {   showStatus(`908 District db not found ${dbUrl}`,"error");}
+			            if(!distResponse.ok) {   showStatus(`578 District db not found ${dbUrl}`,"error");}
 			            //showStatus(`798 : Dis: ${cleanCode}`,"info");
 			            if (distResponse.ok) {
 			                const distBuf = await distResponse.arrayBuffer();
@@ -591,22 +589,22 @@ async function performSearch() {
 			                if (res.length > 0) {
 			                    if (columns.length === 0) columns = res[0].columns;
 			                    allValues = allValues.concat(res[0].values);
-			                    console.log(JSON.stringify(res, null, 2));
-			                    console.log("Result 810:", res); 
+			                    //console.log(JSON.stringify(res, null, 2));
+			                    console.log("Result 592"); 
 			                }
 			               tempDb.close(); 
 			            }
-		        } catch (e) { console.error(`Error in ${districtCode}:`, e); showStatus(`926 Error ${districtCode}: ${e}`, "error");}
+		        } catch (e) { console.error(`Error in ${districtCode}:`, e); showStatus(`596 Error ${districtCode}: ${e}`, "error");}
 		    }
 	            //showStatus("799 ######","info");
-	//GrandTotal के अनुसार शॉर्ट करना
-	const totalIdx = columns.indexOf('GrandTotal'); // कॉलम का नाम के अनुसार 'GrandTotal' का इंडेक्स 
-    if (totalIdx !== -1) {
-        allValues.sort((a, b) => {
-            // CAST TO NUMBER: सुनिश्चित करें कि तुलना नंबर के रूप में हो रही है
-            return Number(b[totalIdx]) - Number(a[totalIdx]);
-        });
-    }
+        	//GrandTotal के अनुसार शॉर्ट करना
+        	const totalIdx = columns.indexOf('GrandTotal'); // कॉलम का नाम के अनुसार 'GrandTotal' का इंडेक्स 
+            if (totalIdx !== -1) {
+                allValues.sort((a, b) => {
+                    // CAST TO NUMBER: सुनिश्चित करें कि तुलना नंबर के रूप में हो रही है
+                    return Number(b[totalIdx]) - Number(a[totalIdx]);
+                });
+            }
 	    // 3. फाइनल 'results' ऑब्जेक्ट बनाएं (जो renderTable को चाहिए)
 		    results = [{
 		        columns: columns,
@@ -615,14 +613,14 @@ async function performSearch() {
     //showStatus("805 ######","info");
     }
     else if(distVal){ 
-    // ======= IF DISTRICT IS SELECTED FROM DROP-DOWN 
-    //    showStatus("802","info");
-    //    await sleep(1000); 
+            // ======= IF DISTRICT IS SELECTED FROM DROP-DOWN 
+            //    showStatus("802","info");
+            //    await sleep(1000); 
     
         const dbUrl = getDBUrl(year, cls, distVal);
     	const distResponse = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);
-    //    if (distResponse.ok) {showStatus(`941 ###### ${dbUrl}`,"info");
-    //    await sleep(3000);}
+            //    if (distResponse.ok) {showStatus(`941 ###### ${dbUrl}`,"info");
+            //    await sleep(3000);}
         const distBuf = await distResponse.arrayBuffer();
         const distDb = new SQL.Database(new Uint8Array(distBuf));
         
@@ -659,9 +657,9 @@ if (results.length === 0) {
     }
     //showStatus("838 ######","info");
     //await sleep(1000); 
-//Result Found So get stats
-//const resultSet = results[0];
-//////////
+        //Result Found So get stats
+        //const resultSet = results[0];
+        //////////
         //Result Found So get stats
         const resultAll = results[0];
         let resultSet; // = results[0];
@@ -678,92 +676,99 @@ if (results.length === 0) {
 		    resultSet = resultAll;
 //		    }
 //////////
-db = await getDatabase(year, cls);
-generateSearchStats(db, resultSet, cls);
+        db = await getDatabase(year, cls);
+        generateSearchStats(db, resultSet, cls);
 // ------------------------------------------------
-console.log("Current DB Status:", db); 
-// 7. Contextual Counts
-let distTotal = 0;  	
-if(!distVal){
-	//showStatus("839","info");
-    //await sleep(1000); 
-    const countQuery = distVal ? 
-       `SELECT COUNT(*) FROM results r WHERE r.District = '${distVal}'` :
-       `SELECT COUNT(*) FROM results`;
-distTotal = db.exec(countQuery)[0].values[0][0];
-console.log("Count Result:", distTotal); 
-}
-if(distVal){
-   //showStatus("846","info");
-  // await sleep(1000); 
-	const distCode = distVal; // मान लिया कि distVal ही फाइल का हिस्सा है
-			const dbUrl = getDBUrl(year, cls, distCode);
-    const distResponse = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);   
-    if (distResponse.ok) {
-        const distBuf = await distResponse.arrayBuffer();
-        db = new SQL.Database(new Uint8Array(distBuf)); // ग्लोबल 'db' असाइन हो गया
-        loadedDbKey = "${year}-${cls}-${distCode}"; 
-        showStatus("District Database Loaded Successfully", "info");
-    } else {
-        showStatus("Error: Could not load specific District Data", "error");
-        return; // आगे नहीं बढ़ना है
-    }
-    
-	console.log("distVal Status:", distVal); 
-const countQuery = distVal ? 
-    `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School JOIN centres c ON s.CentreCode = c.CentreCode JOIN districts d ON c.District = d.District WHERE d.District ='${distVal}' OR d.DisCode = '${distVal}'` :
-    `SELECT COUNT(*) FROM results`;
-distTotal = db.exec(countQuery)[0].values[0][0];
-console.log("Count Result:", distTotal); 
-}
-let centreTotal = 0;
-if(distVal){
-	//showStatus("867","info");
-    //await sleep(1000); 
-const countcQuery = centreVal ? 
-    `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School JOIN centres c ON s.CentreCode = c.CentreCode WHERE c.CentreCode = '${centreVal}'` :
-    `SELECT COUNT(*) FROM results`;
-centreTotal = db.exec(countcQuery)[0].values[0][0];
+        console.log("Current DB Status:", db); 
+        
+        // 7. Contextual Counts
+        
+        let distTotal = 0;  
+	
+        if(!distVal){
+        	//showStatus("839","info");
+            //await sleep(1000); 
+            const countQuery = distVal ? 
+               `SELECT COUNT(*) FROM results r WHERE r.District = '${distVal}'` :
+               `SELECT COUNT(*) FROM results`;
+        distTotal = db.exec(countQuery)[0].values[0][0];
+        console.log("Count Result:", distTotal); 
         }
-let schoolTotal = 0;
-if(distVal){
-const countsQuery = schoolVal ? 
-    `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School WHERE s.School = '${schoolVal}'` :
-    `SELECT COUNT(*) FROM results`;
-schoolTotal = db.exec(countsQuery)[0].values[0][0];
-}
-// 8. Process and Render
+        if(distVal){
+           //showStatus("846","info");
+          // await sleep(1000); 
+        	const distCode = distVal; // मान लिया कि distVal ही फाइल का हिस्सा है
+        	const dbUrl = getDBUrl(year, cls, distCode);
+            const distResponse = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}&v=${time}`);   
+            if (distResponse.ok) {
+                const distBuf = await distResponse.arrayBuffer();
+                db = new SQL.Database(new Uint8Array(distBuf)); // ग्लोबल 'db' असाइन हो गया
+                loadedDbKey = "${year}-${cls}-${distCode}"; 
+                showStatus("District Database Loaded Successfully", "info");
+            } else {
+                showStatus("Error: Could not load specific District Data", "error");
+                return; // आगे नहीं बढ़ना है
+            }
+    
+    	console.log("distVal Status:", distVal); 
+        const countQuery = distVal ? 
+            `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School JOIN centres c ON s.CentreCode = c.CentreCode JOIN districts d ON c.District = d.District WHERE d.District ='${distVal}' OR d.DisCode = '${distVal}'` :
+            `SELECT COUNT(*) FROM results`;
+        distTotal = db.exec(countQuery)[0].values[0][0];
+        console.log("Count Result:", distTotal); 
+        }
+        
+        let centreTotal = 0;
+        
+        if(distVal){
+        	//showStatus("867","info");
+            //await sleep(1000); 
+        const countcQuery = centreVal ? 
+            `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School JOIN centres c ON s.CentreCode = c.CentreCode WHERE c.CentreCode = '${centreVal}'` :
+            `SELECT COUNT(*) FROM results`;
+        centreTotal = db.exec(countcQuery)[0].values[0][0];
+        }
+        
+        let schoolTotal = 0;
+        
+        if(distVal){
+        const countsQuery = schoolVal ? 
+            `SELECT COUNT(*) FROM results r JOIN schools s ON r.School = s.School WHERE s.School = '${schoolVal}'` :
+            `SELECT COUNT(*) FROM results`;
+        schoolTotal = db.exec(countsQuery)[0].values[0][0];
+        }
+        // 8. Process and Render
         	//showStatus("962 before Fetchschema","info");
             //await sleep(2000); 
-subjectsList.clear();
-await fetchSchemaData(db, resultSet); 
-updateSubjectList(db);
-        	//showStatus("965 after Fetchschema","info");
-            //await sleep(2000); 
-//await sleep(2000); 
-const matchCount = resultSet.values.length;
-if(!inputVal && !distVal && !centreVal && !schoolVal) {
-showStatus(`Showing Top ${matchCount} in ${distTotal} in ${cls}th ${year}.`, "success");
-}
-else if(distVal && !inputVal && !centreVal && !schoolVal) {
-showStatus(`Showing Top ${matchCount} in ${distTotal} in ${districtName} ${cls}th ${year}.`, "success");
-} else {
-showStatus(`Found ${matchCount} in ${distTotal}${totDis > 1 ? ' in' + totDis + ' Districts' : ''} in ${cls}th ${year}.`, "success");
-}
-if (distVal && inputVal)showStatus(`Found ${matchCount} in ${distTotal} in ${districtName} (${cls}th-${year}).`, "success");
-if (centreVal)showStatus(`Found ${matchCount} in ${centreTotal} in ${centreName} (${cls}th-${year}).`, "success");
-if (schoolVal)showStatus(`Found ${matchCount} in ${schoolTotal} in ${schoolName} (${cls}th-${year}).`, "success");
-document.getElementById('filterBox').style.display = 'block';
-window.currentCols = resultSet.columns; 
-window.lastResultSet = resultSet;
-window.lastCls = cls;
-window.lastYear = year;
-//renderTable(results[0], cls, year);
-renderTable(resultSet, cls, year);
+        subjectsList.clear();
+        await fetchSchemaData(db, resultSet); 
+        updateSubjectList(db);
+        //showStatus("965 after Fetchschema","info");
+        //await sleep(2000); 
+        //await sleep(2000); 
+        const matchCount = resultSet.values.length;
+        if(!inputVal && !distVal && !centreVal && !schoolVal) {
+        showStatus(`Showing Top ${matchCount} in ${distTotal} in ${cls}th ${year}.`, "success");
+        }
+        else if(distVal && !inputVal && !centreVal && !schoolVal) {
+        showStatus(`Showing Top ${matchCount} in ${distTotal} in ${districtName} ${cls}th ${year}.`, "success");
+        } else {
+        showStatus(`Found ${matchCount} in ${distTotal}${totDis > 1 ? ' in' + totDis + ' Districts' : ''} in ${cls}th ${year}.`, "success");
+        }
+        if (distVal && inputVal)showStatus(`Found ${matchCount} in ${distTotal} in ${districtName} (${cls}th-${year}).`, "success");
+        if (centreVal)showStatus(`Found ${matchCount} in ${centreTotal} in ${centreName} (${cls}th-${year}).`, "success");
+        if (schoolVal)showStatus(`Found ${matchCount} in ${schoolTotal} in ${schoolName} (${cls}th-${year}).`, "success");
+        document.getElementById('filterBox').style.display = 'block';
+        window.currentCols = resultSet.columns; 
+        window.lastResultSet = resultSet;
+        window.lastCls = cls;
+        window.lastYear = year;
+        //renderTable(results[0], cls, year);
+        renderTable(resultSet, cls, year);
 
     } catch (err) {
-showStatus(`Error 944: ${err.message}`, "error");
-console.error(err);
+        showStatus(`Error 762: ${err.message}`, "error");
+        console.error(err);
                   }
 
        finally {
@@ -778,11 +783,11 @@ async function fetchSchemaData(db, resultSet) {
     //showStatus("Processing Schema Data...", "info");
     // हम पहले 2-3 रो ही दिखाएंगे ताकि मैसेज बहुत लंबा न हो जाए
     const previewData = {
-columns: resultSet.columns,
-sampleValues: resultSet.values.slice(0, 2) 
+        columns: resultSet.columns,
+        sampleValues: resultSet.values.slice(0, 2) 
     };
-//    showStatus(`ResultSet Data: ${JSON.stringify(previewData)}`, "info");
- //   await sleep(3500); // देखने के लिए थोड़ा समय दें
+    //showStatus(`ResultSet Data: ${JSON.stringify(previewData)}`, "info");
+    //await sleep(3500); // देखने के लिए थोड़ा समय दें
     
     const year = document.getElementById('yearSelect').value;
     const cls = document.querySelector('input[name="class"]:checked').value;
@@ -794,53 +799,53 @@ sampleValues: resultSet.values.slice(0, 2)
     // 1. District Index चेक करें
     const distIdx = cols.indexOf('District');
     if (distIdx === -1) {
-showStatus("Error: District column missing in results", "error");
-return;
+        showStatus("Error: District column missing in results", "error");
+        return;
     }
 
     // 2. डेटा को ग्रुप करें
     const distGroups = {};
     rows.forEach(row => {
-const dCode = String(row[distIdx]).trim();
-if (!distGroups[dCode]) distGroups[dCode] = [];
-distGroups[dCode].push(row);
+        const dCode = String(row[distIdx]).trim();
+        if (!distGroups[dCode]) distGroups[dCode] = [];
+        distGroups[dCode].push(row);
     });
 
-       //         	showStatus("1028","info");
-           // await sleep(1000); 
+       //showStatus("1028","info");
+       //await sleep(1000); 
     try {
-const SQL = await getSQLEngine();
+    const SQL = await getSQLEngine();
 
-// 3. Subjects.db को सिर्फ एक बार (लूप के बाहर) लोड करें
-const subRes = await fetch(`${globalState.subDir}Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
-const subBuf = await subRes.arrayBuffer();
-const subjectdb = new SQL.Database(new Uint8Array(subBuf));
+    // 3. Subjects.db को सिर्फ एक बार (लूप के बाहर) लोड करें
+    const subRes = await fetch(`${globalState.subDir}Subjects.db?token=${ACCESS_TOKEN}&v=${Date.now()}`);
+    const subBuf = await subRes.arrayBuffer();
+    const subjectdb = new SQL.Database(new Uint8Array(subBuf));
 
 //        	showStatus("1038","info");
           //  await sleep(1000); 
-for (const dCode in distGroups) {
-    //showStatus(`Processing District: ${dCode}`, "info");
-       let newDCode = parseInt(dCode);
-       let response;
-    // 4. डिस्ट्रिक्ट डेटाबेस लोड करें
+    for (const dCode in distGroups) {
+        //showStatus(`Processing District: ${dCode}`, "info");
+           let newDCode = parseInt(dCode);
+           let response;
+        // 4. डिस्ट्रिक्ट डेटाबेस लोड करें
 			    let dbUrl;
-	        if (newDCode < 100) {
-	            newCode = newDCode + 100;
-			    dbUrl = getDBUrl(year, cls, newCode);
-        response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}`);
-	        }else { 
-    dbUrl = getDBUrl(year, cls, dCode);
-    response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}`);
-    }
-    if (!response.ok) showStatus(`Dist file not found for ${dCode}`, "info");     await sleep(1500); //continue;
-//    if (response.ok) showStatus(`Dist file found for ${dCode}`, "info");     await sleep(1500); 
-//                	showStatus("1046","info");
-          //  await sleep(1000);         
-    const buf = await response.arrayBuffer();
-    const distDb = new SQL.Database(new Uint8Array(buf));
+    	        if (newDCode < 100) {
+    	            newCode = newDCode + 100;
+    			    dbUrl = getDBUrl(year, cls, newCode);
+                    response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}`);
+    	        }else { 
+                    dbUrl = getDBUrl(year, cls, dCode);
+                    response = await fetch(`${dbUrl}?token=${ACCESS_TOKEN}`);
+                }
+                if (!response.ok) showStatus(`Dist file not found for ${dCode}`, "info");     await sleep(1500); //continue;
+                 //    if (response.ok) showStatus(`Dist file found for ${dCode}`, "info");     await sleep(1500); 
+                 //                	showStatus("1046","info");
+                //  await sleep(1000);         
+                const buf = await response.arrayBuffer();
+                const distDb = new SQL.Database(new Uint8Array(buf));
 
-  //              	showStatus("1051","info");
-          //  await sleep(1000); 
+                  //              	showStatus("1051","info");
+                  //  await sleep(1000); 
     // Exam Date निकालें (हर डिस्ट्रिक्ट फाइल से या एक बार)
     let examDate = "-";
     try {
@@ -848,8 +853,8 @@ for (const dCode in distGroups) {
         if (exR.length) examDate = exR[0].values[0][0];
     } catch(e) {
         	showStatus(`1056 ${e}`,"info");
-      //   await sleep(1000); 
-}
+          //   await sleep(1000); 
+    }
     // 5. इस डिस्ट्रिक्ट के स्टूडेंट्स को प्रोसेस करें
     for (const row of distGroups[dCode]) {
         const roll = row[cols.indexOf('Roll')];
@@ -1747,6 +1752,7 @@ async function handleCentreChange() {
 	
 	        }
 	        tempDb.close();
+	        if(db) await updateGlobalCounts(db);  await updateVerificationDate(db);
 	    } catch (e) { console.error(e); showStatus(`Error 1860: ${e}`, "error");}
 		finally {
 		//if(tempDb)	tempDb.close();
@@ -1824,16 +1830,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Centre Change (updates counts for selected centre)
     document.getElementById('centreSelect').addEventListener('change', async () => {
          await handleCentreChange();
-           if (db) {
-                        toggleSearch(true);
-                     try{
-                     await updateGlobalCounts(db); 
-                     await updateVerificationDate(db);
-                         } 
-                     finally {
-                         toggleSearch(false);
-                                }
-                       }
+           //if (db) {toggleSearch(true); try{ await updateGlobalCounts(db);  await updateVerificationDate(db);  } finally { toggleSearch(false); } }
        });
 
     // 3. School Change (updates counts for specific school)
@@ -1859,6 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add this to the end of your DOMContentLoaded
 async function initialLoad() {
     toggleSearch(true);
+    console.log("Initial load started");
     const year = document.getElementById('yearSelect').value;
     const cls = document.querySelector('input[name="class"]:checked').value;
     // Pre-load the DB so counters work even before the first search
@@ -1873,37 +1871,6 @@ async function initialLoad() {
 		    }
 }
 initialLoad();
-(function() {
-    const targetDate = new Date(2026, 2, 31, 10, 10, 18).getTime(); // 28 Mar 2026 1:15:18 PM
-    const timerEl = document.getElementById('timer');
-    const yearSelect = document.getElementById('yearSelect');
-
-   const cls = document.querySelector('input[name="class"]:checked').value;
-
-    const interval = setInterval(() => {
-const now = new Date().getTime();
-const diff = targetDate - now;
-
-if (diff <= 0) {
-    clearInterval(interval);
-    timerEl.innerText = ""; // टाइमर हटा दें
-    yearSelect.value = "2026"; // साल बदलें
-    document.querySelector(`input[name="class"][value="12"]`).checked = true;    if(typeof onYearOrClassChange === "function") onYearOrClassChange(); // फंक्शन ट्रिगर करें
-    return;
-}
-
-// समय की गणना (Days, Hours, Minutes, Seconds)
-const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-// सिर्फ जरूरी हिस्सा दिखाएँ (अगर दिन हैं तो दिन, वरना सिर्फ समय)
-timerEl.innerText = (d > 0 ? d + "d " : "") + `${h}:${m}:${s}`;
-    }, 1000);
-})();
-
-
 
 async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear) {
     const SQL = await getSQLEngine();
@@ -3092,6 +3059,7 @@ doc.text(`OUT OF ${item.stats}`, centerX, yPos + 12, { align: "center" });
 	    //align: "center",
 	     angle: 90
 	});
+	doc.setTextColor(0);
 
     // --- PASTE YOUR ENTIRE DRAWING LOGIC HERE ---
     // Copy everything from inside your current `dlBtn.onclick = () => { ... }`
