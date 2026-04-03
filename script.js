@@ -414,7 +414,7 @@ async function performSearch() {
     else if (!inputVal && distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
         searchInputEl.placeholder = `Top 100 of District ${districtName}`;
-        showStatus(`Showinge TOP 100 Students from all ${districtName}`, "info"); 
+        showStatus(`Showing TOP 100 Students from all ${districtName}`, "info"); 
     } 
     
     
