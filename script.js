@@ -3303,6 +3303,7 @@ window.onSearchChange = onSearchChange;
 window.closeModal = closeModal; 
 window.showModal = showModal; 
 window.sortTable = sortTable;
+window.syncSubjects = syncSubjects;
 window.downloadBatchPDF = downloadBatchPDF;
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
