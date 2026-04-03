@@ -409,7 +409,7 @@ async function performSearch() {
     if (!inputVal && !distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
         searchInputEl.placeholder = "Top 200 All Rajasthan";
-        showStatus(`Showinge TOP 200 Students from all Rajasthan`, "info"); 
+        showStatus(`Showing TOP 200 Students from all Rajasthan`, "info"); 
     } 
     else if (!inputVal && distVal && !centreVal && !schoolVal) {
         searchInputEl.disabled = true; 
