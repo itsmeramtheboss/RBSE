@@ -19,7 +19,9 @@ const sleep = ms => new Promise(res => setTimeout(res, ms));
 async function forceResetAndReload() {
     showStatus("Clearing all caches & IndexedDB... Reloading fresh...", "info");
     const searchType = document.querySelector('input[name="search"]:checked').value;
-    const searchInputEl = document.getElementById('searchInput'); 
+    const searchInputEl = document.getElementById('searchInput');
+    const nameWise = document.getElementById('nameWise'); 
+    nameWise.style.display = "none";
     searchInputEl.disabled = false; 
     if (searchType === "roll"){
     searchInputEl.placeholder="Enter Roll (e.g. 1234 OR 1000-1234)"
@@ -1519,14 +1521,17 @@ async function handleDistrictChange() {
     centreSelect.innerHTML = '<option value="">-- All Centres --</option>';
     schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
 
+    const nameWise = document.getElementById('nameWise'); 
+    nameWise.style.display = "inline-flex";
     if (!newDistCode) { 
           centreSelect.innerHTML = '<option value="">-- All Centres --</option>';
           schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
           document.getElementById('centreGroup').style.display = 'none';
           document.getElementById('schoolGroup').style.display = 'none';
        // Use the currently loaded global database to update counts
+       nameWise.style.display = "none";
       if (db) {
-          await updateGlobalCounts(db);
+          //await updateGlobalCounts(db);
           await updateVerificationDate(db);
           }
          toggleSearch(false);
@@ -1545,7 +1550,7 @@ async function handleDistrictChange() {
 
 //db = await getDatabase(selectedYear, cls);
 // ADD THIS LINE HERE
-        await updateGlobalCounts(db); 
+        //await updateGlobalCounts(db); 
         await updateVerificationDate(db);
         const rawData = tempDb.exec(`
             SELECT c.CentreCode, s.School, s.SchoolName, c.District, COUNT(s.School) OVER(PARTITION BY c.CentreCode) as SchCount
@@ -1752,7 +1757,7 @@ async function handleCentreChange() {
 	
 	        }
 	        tempDb.close();
-	        if(db) await updateGlobalCounts(db);  await updateVerificationDate(db);
+	        if(db)  await updateVerificationDate(db); //await updateGlobalCounts(db);
 	    } catch (e) { console.error(e); showStatus(`Error 1860: ${e}`, "error");}
 		finally {
 		//if(tempDb)	tempDb.close();
@@ -1776,7 +1781,7 @@ async function onYearOrClassChange() {
 		
 		    await updateDistrictDropdown(db);
 		    await updateVerificationDate(db);
-		    await updateGlobalCounts(db);
+		   // await updateGlobalCounts(db);
 		    await handleDistrictChange();
     }
     finally {
@@ -1838,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', () => {
            if (db) {
                         toggleSearch(true);
                      try{
-                     await updateGlobalCounts(db); 
+                    // await updateGlobalCounts(db); 
                      await updateVerificationDate(db);
                          } 
                      finally {
@@ -1863,7 +1868,7 @@ async function initialLoad() {
     try {
 	        db = await getDatabase(year, cls);
 	        await updateDistrictDropdown(db);
-	        await updateGlobalCounts(db);
+	        //await updateGlobalCounts(db);
 	        await updateVerificationDate(db);
 	      } catch(e) { console.log("Initial load skipped"); showStatus(`Error 2056: ${e}`, "error");}
 		    finally {

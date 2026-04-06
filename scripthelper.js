@@ -1560,7 +1560,7 @@ schoolSelect.innerHTML = '<option value="">-- All Schools --</option>';
     document.getElementById('schoolGroup').style.display = 'none';
 // Use the currently loaded global database to update counts
 if (db) {
-    await updateGlobalCounts(db);
+    //await updateGlobalCounts(db);
     await updateVerificationDate(db);
      }
    toggleSearch(false);
@@ -1579,7 +1579,7 @@ const tempDb = new SQL.Database(new Uint8Array(buf));
 
 //db = await getDatabase(selectedYear, cls);
 // ADD THIS LINE HERE
-await updateGlobalCounts(db); 
+//await updateGlobalCounts(db); 
 await updateVerificationDate(db);
 const rawData = tempDb.exec(`
     SELECT c.CentreCode, s.School, s.SchoolName, c.District, COUNT(s.School) OVER(PARTITION BY c.CentreCode) as SchCount
@@ -1809,7 +1809,7 @@ toggleSearch(true);
 		
 		    await updateDistrictDropdown(db);
 		    await updateVerificationDate(db);
-		    await updateGlobalCounts(db);
+		    //await updateGlobalCounts(db);
 		    await handleDistrictChange();
     }
     finally {
@@ -1937,12 +1937,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Centre Change (updates counts for selected centre)
     document.getElementById('centreSelect').addEventListener('change', async () => {
 await handleCentreChange();
-if (db) await updateGlobalCounts(db); await updateVerificationDate(db);
+if (db) await updateVerificationDate(db); //await updateGlobalCounts(db); 
     });
 
     // 3. School Change (updates counts for specific school)
     document.getElementById('schoolSelect').addEventListener('change', async () => {
-if (db) await updateGlobalCounts(db); await updateVerificationDate(db);
+if (db) await updateVerificationDate(db); //await updateGlobalCounts(db); 
     });
 });
 
@@ -1960,7 +1960,7 @@ async function initialLoad() {
     try {
 	        db = await getDatabase(year, cls);
 	        await updateDistrictDropdown(db);
-	        await updateGlobalCounts(db);
+	        //await updateGlobalCounts(db);
 	        await updateVerificationDate(db);
 	      } catch(e) { console.log("Initial load skipped"); showStatus(`Error 2056: ${e}`, "error");}
 		    finally {
@@ -1968,36 +1968,6 @@ async function initialLoad() {
 		    }
 }
 initialLoad();
-(function() {
-    const targetDate = new Date(2026, 3, 4, 13, 18, 18).getTime(); // 28 Mar 2026 1:15:18 PM
-    const timerEl = document.getElementById('timer');
-    const yearSelect = document.getElementById('yearSelect');
-
-   const cls = document.querySelector('input[name="class"]:checked').value;
-
-    const interval = setInterval(() => {
-const now = new Date().getTime();
-const diff = targetDate - now;
-
-if (diff <= 0) {
-    clearInterval(interval);
-    timerEl.innerText = ""; // टाइमर हटा दें
-    yearSelect.value = "2026"; // साल बदलें
-    document.querySelector(`input[name="class"][value="12"]`).checked = true;    if(typeof onYearOrClassChange === "function") onYearOrClassChange(); // फंक्शन ट्रिगर करें
-    return;
-}
-
-// समय की गणना (Days, Hours, Minutes, Seconds)
-const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-// सिर्फ जरूरी हिस्सा दिखाएँ (अगर दिन हैं तो दिन, वरना सिर्फ समय)
-timerEl.innerText = (d > 0 ? d + "d " : "") + `${h}:${m}:${s}`;
-    }, 1000);
-})();
-
 
 
 async function fetchFallbackData(type, studentRow, cols, currentCls, currentYear) {
