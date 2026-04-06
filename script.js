@@ -520,10 +520,10 @@ async function performSearch() {
 				if (!inputVal && !distVal && !centreVal && !schoolVal) {
 				    mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC LIMIT 200`;
 				} else if (!inputVal && distVal && !centreVal && !schoolVal) {
-				    query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 100`;
+				    //query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC LIMIT 100`;
                } else {
                	mquery += ` ORDER BY CAST(GrandTotal AS INTEGER) DESC`;
-                   query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC`;
+                   //query += ` ORDER BY CAST(r.GrandTotal AS INTEGER) DESC`;
               }
 		if(!distVal) {
 			//showStatus("730","info");
@@ -569,7 +569,7 @@ async function performSearch() {
 		totDis = Object.keys(distMap).length;
         showStatus(`Found ${count} Result${count > 1 ? 's' : ''} in ${totDis} District${totDis > 1 ? 's' : ''},\n getting full result data...`, "info");
 		//console.log(JSON.stringify(distMap, null, 2));
-		console.log("Got results from districts...");
+		console.log(`Got ${count} Result${count > 1 ? 's' : ''} in ${totDis} District${totDis > 1 ? 's' : ''}`);
 		
 		    // 2. हर डिस्ट्रिक्ट फाइल के लिए लूप चलाएं
 		    for (const districtCode in distMap) {
@@ -596,7 +596,11 @@ async function performSearch() {
 			                }
 			               tempDb.close(); 
 			            }
-		        } catch (e) { console.error(`Error in ${districtCode}:`, e); showStatus(`596 Error ${districtCode}: ${e}`, "error");}
+		        } catch (e) { 
+               console.error(`Error in ${districtCode}:`, e);
+              showStatus(`601 Error ${districtCode}: ${e}`, "error");
+              await sleep(3500);
+                                    }
 		    }
 	            //showStatus("799 ######","info");
         	//GrandTotal के अनुसार शॉर्ट करना
@@ -1346,142 +1350,6 @@ options.forEach(opt => {
 }
 
 
-async function updateGlobalCounts(db) {
-	const cls = Number(document.querySelector('input[name="class"]:checked').value);
-    const year = document.getElementById('yearSelect').value;
-    
-	const key = `${year}-${cls}-master`;
-    //if(loadedDbKey) showStatus(`${loadedDbKey} = ${key}`, "info");
-    //if (loadedDbKey === key) showStatus(` Equal : ${loadedDbKey} = ${key}`, "info");
-    try {
-    if(!db) return;
-const distVal = document.getElementById('districtSelect').value;
-const centVal = document.getElementById('centreSelect').value;
-const schVal = document.getElementById('schoolSelect').value;
-// क्लास की वैल्यू चेक करें
-       // const clsElement = document.querySelector('input[name="class"]:checked');
-      //  const cls = clsElement ? parseInt(clsElement.value) : null;
-
-       //for district list as per db
-       
-       if (db) {
-   //showStatus(` 1057 Database: ${db}`, "error");
- //  await updateDistrictDropdown(db);
-           }
-
-// 1. Build a dynamic WHERE clause based on selection hierarchy
-let filter = "WHERE 1=1"; // Default "always true" 
-if (schVal) {
-    filter += ` AND r.School = '${schVal}'`;
-} else if (centVal) {
-	if(loadedDbKey === key) {
-    filter += ` AND r.Centre = '${centVal}'`;
-    } else {
-    	filter += ` AND r.CentreCode = '${centVal}'`;
-    }
-} else if (distVal) {
-    filter += ` AND r.District = '${distVal}'`;
-}
-
-// 2. We use JOINs for all counts so the District/Centre filter works
-// We calculate all totals in one clean pass
-let sql = null;
-if(loadedDbKey === key) {
- sql = `
-    SELECT 
-        COUNT(r.Roll) as total,
-        SUM(CASE WHEN r.RegType = 1 THEN 1 ELSE 0 END) as reg,
-        SUM(CASE WHEN r.RegType = 2 THEN 1 ELSE 0 END) as pvt,
-        SUM(CASE WHEN r.Result IN (1,2,3,5,14,24,34) THEN 1 ELSE 0 END) as pass,
-        SUM(CASE WHEN r.Result = 0 THEN 1 ELSE 0 END) as fail,
-        SUM(CASE WHEN r.Result = 6 THEN 1 ELSE 0 END) as supp,
-        SUM(CASE WHEN r.Result = 7 THEN 1 ELSE 0 END) as abs,
-        SUM(CASE WHEN r.Stream = 1 THEN 1 ELSE 0 END) as arts,
-        SUM(CASE WHEN r.Stream = 2 THEN 1 ELSE 0 END) as comm,
-        SUM(CASE WHEN r.Stream = 3 THEN 1 ELSE 0 END) as sci,
-        COUNT(DISTINCT r.School) as schCount,
-        COUNT(DISTINCT r.Centre) as centCount
-    FROM results r
-    ${filter}
-`;
-}
-else {
-	sql = `
-    SELECT 
-        COUNT(r.Roll) as total,
-        SUM(CASE WHEN r.RegType = 1 THEN 1 ELSE 0 END) as reg,
-        SUM(CASE WHEN r.RegType = 2 THEN 1 ELSE 0 END) as pvt,
-        SUM(CASE WHEN r.Result IN (1,2,3,5,14,24,34) THEN 1 ELSE 0 END) as pass,
-        SUM(CASE WHEN r.Result = 0 THEN 1 ELSE 0 END) as fail,
-        SUM(CASE WHEN r.Result = 6 THEN 1 ELSE 0 END) as supp,
-        SUM(CASE WHEN r.Result = 7 THEN 1 ELSE 0 END) as abs,
-        SUM(CASE WHEN r.Stream = 1 THEN 1 ELSE 0 END) as arts,
-        SUM(CASE WHEN r.Stream = 2 THEN 1 ELSE 0 END) as comm,
-        SUM(CASE WHEN r.Stream = 3 THEN 1 ELSE 0 END) as sci,
-        COUNT(DISTINCT s.School) as schCount,
-        COUNT(DISTINCT c.CentreCode) as centCount
-    FROM results r
-    LEFT JOIN schools s ON r.School = s.School
-    LEFT JOIN centres c ON s.CentreCode = c.CentreCode
-    LEFT JOIN districts d ON c.District = d.District
-    ${filter}
-`;
-}
-
-const res = db.exec(sql);
-
-       if (res.length > 0 && res[0].values.length > 0) {
-   const [total, reg, pvt, pass, fail, supp, abs, arts, comm, sci, schCount, centCount] = res[0].values[0];
-
-   // 1. एक टेबल एलिमेंट बनाएँ
-   const table = document.createElement('table');
-   table.style.borderCollapse = 'separate'; 
-   table.style.borderSpacing = '0';      table.style.borderRadius = '10px';        
-   table.style.overflow = 'hidden';        table.style.border = '1px solid #ddd';    
-   table.style.width = '100%';
-   table.style.font = '8px';
-
-   // 2. टेबल का डेटा तैयार करें (Row-wise)
-   // पहली 3 रो कॉमन हैं, चौथी रो तभी आएगी जब Class 12 हो
-   let rows = [
-       ["Total Students", "Centres", "Schools"],
-       [total.toLocaleString(), centCount, schCount],
-       [`Regular`, `Supplementary`, `Pass`],
-       [`${reg}`, `${supp}`, `${pass}`],
-       [`Private: ${pvt}`, `Absent: ${abs}`, `Fail: ${fail}`]
-   ];
-   // अगर Class 12 है, तो Streams वाली रो जोड़ें
-   if (cls === 12) {
-       rows.push([`ARTS`, `COMMERCE`, `SCIENCE`],
-                           [`${arts}`, `${comm}`, `${sci}`]);
-   }
-
-   // 3. लूप चलाकर टेबल में Rows और Cells डालें
-   rows.forEach((rowData) => {
-       const row = table.insertRow();
-       rowData.forEach((cellData) => {
-           const cell = row.insertCell();
-           cell.innerHTML = cellData;
-           cell.style.padding = '6px';
-           cell.style.border = '1px solid #ddd';
-           cell.style.padding = '9px 5px';   
-           cell.style.textAlign = 'center';   
-       });
-   });
-
-   // 4. किसी एक Container (जैसे result-div) में टेबल दिखाएं
-   // यहाँ मैं 'totalStudentsCount' वाले div को इस्तेमाल कर रहा हूँ
-   const container = document.getElementById('totalStudentsCount');
-   container.innerHTML = ""; // पुराना डेटा साफ़ करें
-   container.appendChild(table);
-
-       }
-
-    } catch (e) {
-console.error("Filter Error:", e);
-showStatus(`Error 1598: ${e}`, "error");
-    }
-}
 function resetFilters() {
     // Clear the dropdowns
     document.getElementById('districtSelect').value = "";
@@ -3309,6 +3177,7 @@ window.closeModal = closeModal;
 window.showModal = showModal; 
 window.sortTable = sortTable;
 window.syncSubjects = syncSubjects;
+window.reRenderOnly = reRenderOnly;
 window.downloadBatchPDF = downloadBatchPDF;
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
