@@ -2608,7 +2608,7 @@ doc.text(`${perc} %`, 95, 80, {
 });
 }
 doc.setFontSize(20);
-doc.setTextColor(255);// (150); // Light gray
+doc.setTextColor(255); //White 255; (150); Light gray
 doc.setFont("helvetica", "bold"); //115,230
 doc.text("WhatsApp 9799085769", 115, 200, {
     align: "center",
@@ -3178,6 +3178,7 @@ window.showModal = showModal;
 window.sortTable = sortTable;
 window.syncSubjects = syncSubjects;
 window.reRenderOnly = reRenderOnly;
+window.filterTable = filterTable;
 window.downloadBatchPDF = downloadBatchPDF;
 window.forceResetAndReload = forceResetAndReload;
     /* --- JAVASCRIPT SECTION END --- */
