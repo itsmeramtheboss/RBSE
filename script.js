@@ -816,7 +816,7 @@ if (results.length === 0) {
             document.getElementById('searchInput').value = givenVal; 
 
             // 4. सर्च खत्म होने के बाद PDF डाउनलोड बटन को ट्रिगर करें
-            const batchPdfBtn = document.getElementById('batchPdfBtn'); // अपनी PDF बटन की ID चेक करें
+            const batchPdfBtn = document.getElementById('modalDL'); // अपनी PDF बटन की ID चेक करें
             if (batchPdfBtn) {
                 batchPdfBtn.click();
             }
