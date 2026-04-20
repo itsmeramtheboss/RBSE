@@ -378,6 +378,8 @@ async function performSearch() {
     currentSort = { colIndex: -1, state: 0 };
 
     // 2. Get UI Inputs
+    const schoolBtn = document.getElementById('schoolBtn');
+    
     const searchInputEl = document.getElementById('searchInput'); 
     let inputVal = searchInputEl.value.trim();
     //let inputVal = document.getElementById('searchInput').value.trim();
@@ -772,6 +774,69 @@ if (results.length === 0) {
         //renderTable(results[0], cls, year);
         renderTable(resultSet, cls, year);
 
+        const cols = resultSet.columns;
+        const rows = resultSet.values;
+        const schoolIdx = cols.indexOf('School');
+        const centIdx = cols.indexOf('CentreCode'); 
+        const distIdx = cols.indexOf('District'); 
+        
+    if (rows && rows.length > 0) {
+        // 1. चेक करें कि क्या सभी रिजल्ट्स एक ही स्कूल के हैं
+        const uniqueSchools = new Set(rows.map(row => row[schoolIdx]));
+        
+        const distCode = rows[0][distIdx];
+        const centCode = rows[0][centIdx];
+        const schCode = rows[0][schoolIdx];
+
+        console.log("Sch:", schCode);
+        console.log("Cent:", centCode);
+        console.log("Dist:", distCode);
+        
+        if (uniqueSchools.size === 1) {
+            // अगर सिर्फ एक स्कूल है तो बटन दिखाओ
+            schoolBtn.style.display = 'block';
+            schoolBtn.onclick = async () => {
+            const selectedSchoolName = uniqueSchools[0];
+            const distCode = rows[0][distIdx]; // पहले रिजल्ट से डिस्ट्रिक्ट कोड लें
+
+            // 1. UI में डिस्ट्रिक्ट और स्कूल सेट करें
+            document.getElementById('districtSelect').value = distCode;
+            await handleDistrictChange();
+            document.getElementById('centreSelect').value = centCode;
+            await handleCentreChange();
+            document.getElementById('schoolSelect').value = schCode;
+            
+            //input को खाली करो ताकि सभी स्टूडेंट्स का results show हो 
+            const givenVal = document.getElementById('searchInput').value;
+            document.getElementById('searchInput').value = ''; 
+
+            // 2. performSearch को फिर से रन करें
+            await window.performSearch();
+            //input value पुनः दिखाओ ताकि यूजर को रेफरेंस पता रहे
+            document.getElementById('searchInput').value = givenVal; 
+
+            // 4. सर्च खत्म होने के बाद PDF डाउनलोड बटन को ट्रिगर करें
+            const batchPdfBtn = document.getElementById('batchPdfBtn'); // अपनी PDF बटन की ID चेक करें
+            if (batchPdfBtn) {
+                batchPdfBtn.click();
+            }
+        };
+        } else if (uniqueSchools.size > 1) {
+            // 2. अगर एक से ज्यादा स्कूल हैं तो बटन दिखाओ पर क्लिक पर ड्रॉपडाउन दिखाओ
+            schoolBtn.style.display = 'none'; //'block';
+            schoolBtn.onclick = () => {
+                // स्कूल ड्रॉपडाउन (schoolSelect) पर फोकस करें या उसे दिखाएँ
+                const schoolDropdown = document.getElementById('schoolSelect');
+                schoolDropdown.focus();
+                alert("कृपया लिस्ट में से अपना स्कूल चुनें"); 
+            };
+        } else {
+            schoolBtn.style.display = 'none';
+        }
+    } else {
+        schoolBtn.style.display = 'none';
+    }
+        
     } catch (err) {
         showStatus(`Error 762: ${err.message}`, "error");
         console.error(err);
@@ -3159,7 +3224,7 @@ if (type === "info") {
 // Auto-hide only if condition NOT matched
 hideTimeout = setTimeout(() => {
     statusDiv.style.display = "none";
-}, 60000);
+}, 120000);
     }
 }
 
